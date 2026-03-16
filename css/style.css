@@ -83,3 +83,45 @@ canvas {
   border-radius: 8px; font-family: sans-serif;
 }
 #creditsPanel h3 { margin-top: 0; color: #fff; }
+
+/* Estilos de la Caja de Diálogo RPG */
+#dialogueBox {
+  position: absolute;
+  bottom: 20px; left: 50%;
+  transform: translateX(-50%);
+  width: 80%; max-width: 600px;
+  background: rgba(10, 10, 20, 0.85);
+  border: 3px solid #6b5c38; /* Borde dorado viejo */
+  border-radius: 8px;
+  padding: 15px 20px 25px 20px;
+  color: #eaddcf; /* Texto pergamino */
+  font-family: 'Courier New', Courier, monospace; /* Letra tipo máquina vieja / RPG */
+  font-size: 18px;
+  line-height: 1.4;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.8);
+  z-index: 1000;
+  cursor: pointer;
+}
+#dialogueName {
+  font-weight: bold;
+  color: #ffcc00; /* Nombre destacado */
+  margin-bottom: 8px;
+  font-size: 20px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+#dialogueText {
+  min-height: 50px;
+}
+#dialoguePrompt {
+  position: absolute;
+  bottom: 5px; right: 15px;
+  font-size: 14px;
+  color: #888;
+  animation: blink 1s infinite;
+}
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
