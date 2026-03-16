@@ -19,15 +19,8 @@ const createScene = () => {
   const hemiLight = new BABYLON.HemisphericLight("hemiLight", new BABYLON.Vector3(0,1,0), scene);
   hemiLight.intensity = 0.4;
 
-  // Skybox estrellado (necesita 6 imágenes: stars_px.jpg, stars_nx.jpg, etc.)
-  const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000}, scene);
-  const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
-  skyboxMaterial.backFaceCulling = false;
-  skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("assets/stars", scene);
-  skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-  skyboxMaterial.diffuseColor = new BABYLON.Color3(0,0,0);
-  skyboxMaterial.specularColor = new BABYLON.Color3(0,0,0);
-  skybox.material = skyboxMaterial;
+  // Skybox removido porque faltaban las texturas (esto causaba que no cargara)
+  // Se usará el scene.clearColor que ya está configurado (negro)
 
   // Piso
   const ground = BABYLON.MeshBuilder.CreateGround("ground", {width:50, height:50}, scene);
