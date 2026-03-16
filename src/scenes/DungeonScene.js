@@ -26,7 +26,14 @@ export class DungeonScene {
         camera.rotationOffset = 180;
         camera.cameraAcceleration = 0.05;
         camera.maxCameraSpeed = 10;
-        camera.checkCollisions = true; // La cámara choca con el suelo/paredes
+        
+        // Límites estrictos para evitar que la cámara perfore el suelo
+        camera.lowerHeightOffsetLimit = 5;  // No puede bajar más de 5 unidades de altura respecto al jugador
+        camera.upperHeightOffsetLimit = 25; // No puede subir más de 25
+        camera.lowerRadiusLimit = 10;       // No puede acercarse mucho
+        camera.upperRadiusLimit = 30;       // No puede alejarse mucho
+        
+        camera.checkCollisions = true; // La cámara choca con paredes grandes
         
         // Bloquear control del usuario sobre la cámara para enfocar en aventura
         camera.attachControl(this.canvas, false);
