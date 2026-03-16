@@ -81,12 +81,18 @@ export class DungeonScene {
         // Aplicar controlador basado en config
         this.applyConfig(config);
 
+        // Pre-generar el mundo inicial AHORA para evitar congelamientos post-diálogo
+        const enemies = [];
+        world.update(this.player.mesh.position, enemies);
+        while(world.enemiesData.length > 0) {
+            let ed = world.enemiesData.pop();
+            enemies.push(new ShadowRat(scene, this.player, ed.x, ed.z));
+        }
+
         // Generar armas iniciales garantizadas en el punto de inicio para no estar desnudos
         world.createChest("chest_start_sword", "espada", -4, 0.5, 4);
         world.createChest("chest_start_shield", "escudo", 4, 0.5, 4);
 
-        const enemies = [];
-        
         this.player.canMove = false; 
 
         setTimeout(() => {
