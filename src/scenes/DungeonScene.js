@@ -28,14 +28,20 @@ export class DungeonScene {
 
         // Luz de ambiente oscura (Cueva)
         const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);
-        ambientLight.intensity = 0.2;
-        ambientLight.groundColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+        ambientLight.intensity = 0.35; // Un poco más clara
+        ambientLight.groundColor = new BABYLON.Color3(0.1, 0.1, 0.1);
 
-        // Luz que lleva el jugador (Antorcha/Aura)
+        // Luz base que lleva el jugador (Antorcha/Aura perimetral)
         const playerLight = new BABYLON.PointLight("playerLight", new BABYLON.Vector3(0, 3, 0), scene);
-        playerLight.intensity = 0.8;
+        playerLight.intensity = 1.0; // Más potente
         playerLight.diffuse = new BABYLON.Color3(1, 0.8, 0.5); // Naranja cálido
-        playerLight.range = 15;
+        playerLight.range = 25; // Mayor alcance
+
+        // Linterna direccional del jugador (Apunta hacia adelante)
+        const flashlight = new BABYLON.SpotLight("flashlight", new BABYLON.Vector3(0, 1, 0), new BABYLON.Vector3(0, -0.1, 1), Math.PI / 2.5, 5, scene);
+        flashlight.intensity = 2.5; // Muy potente
+        flashlight.diffuse = new BABYLON.Color3(1, 1, 1); // Luz blanca
+        flashlight.range = 50;
 
         // Sistemas Principales
         const input = new InputController();
@@ -48,7 +54,8 @@ export class DungeonScene {
         // Entidades
         const player = new Player(scene, input);
         camera.lockedTarget = player.mesh; // Seguir al héroe
-        playerLight.parent = player.mesh; // La luz lo sigue a donde vaya
+        playerLight.parent = player.mesh; // El aura lo sigue
+        flashlight.parent = player.mesh; // La linterna lo sigue y apunta hacia donde mira
 
         // Bucle Principal
         scene.onBeforeRenderObservable.add(() => {
@@ -60,7 +67,7 @@ export class DungeonScene {
 
         // Efecto de Niebla de guerra profunda
         scene.fogMode = BABYLON.Scene.FOGMODE_EXP;
-        scene.fogDensity = 0.04;
+        scene.fogDensity = 0.02; // Menos densa para que la luz penetre más
         scene.fogColor = scene.clearColor;
 
         return scene;
