@@ -49,4 +49,7 @@ window.addEventListener("pauseGame", () => {
 });
 
 // Inicializar el gestor de menús (que a su vez llamará a initGame)
+console.log("Inicializando MenuManager...");
 const menuManager = new MenuManager(initGame);
+menuManager.showMainMenu();
+console.log("Menú Principal mostrado en pantalla.");
