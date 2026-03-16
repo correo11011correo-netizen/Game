@@ -27,7 +27,7 @@ export class HUD {
         this.creditsBtn.addEventListener("click", async () => {
             if (this.creditsPanel.style.display === "none" || this.creditsPanel.style.display === "") {
                 try {
-                    const res = await fetch("data/comentarios.json");
+                    const res = await fetch(`data/comentarios.json?v=${Date.now()}`);
                     const data = await res.json();
                     this.creditsPanel.innerHTML = "<h3>👥 Aventureros</h3>";
                     data.forEach(entry => {
