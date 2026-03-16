@@ -18,7 +18,7 @@ export class Player {
         mat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.8); // Color de la túnica
         this.mesh.material = mat;
 
-        this.speed = 0.2; // Un poco más rápido para compensar la fricción de colisiones
+        this.speed = 0.2; 
         this.isAttacking = false;
         this.isDefending = false;
         this.canMove = true;
@@ -41,10 +41,10 @@ export class Player {
         this.swordMesh.position = new BABYLON.Vector3(0.6, 0.5, 0.5); // Lado derecho
         this.swordMesh.rotation.x = Math.PI / 2; // Apuntando hacia adelante
         this.swordMesh.parent = this.mesh;
-        this.swordMesh.isVisible = false; // Oculta hasta encontrarla
+        this.swordMesh.isVisible = false; 
         
         const swordMat = new BABYLON.StandardMaterial("swordMat", this.scene);
-        swordMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8); // Gris metálico
+        swordMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8); 
         this.swordMesh.material = swordMat;
 
         // Escudo Visual
@@ -53,56 +53,45 @@ export class Player {
         this.shieldMesh.rotation.x = Math.PI / 2;
         this.shieldMesh.rotation.z = Math.PI / 2;
         this.shieldMesh.parent = this.mesh;
-        this.shieldMesh.isVisible = false; // Oculto hasta encontrarlo
+        this.shieldMesh.isVisible = false; 
         
         const shieldMat = new BABYLON.StandardMaterial("shieldMat", this.scene);
-        shieldMat.diffuseColor = new BABYLON.Color3(0.5, 0.3, 0.1); // Madera oscura
+        shieldMat.diffuseColor = new BABYLON.Color3(0.5, 0.3, 0.1); 
         this.shieldMesh.material = shieldMat;
     }
 
     update(chests, enemies) {
         if (!this.canMove) return;
 
-        // Moverse usando Físicas (moveWithCollisions) Relativo a la Cámara
+        // Movimiento Modo Shooter: 
+        // Joystick IZQUIERDA/DERECHA (joyX) -> Rota al jugador
+        // Joystick ARRIBA/ABAJO (joyY) -> Camina adelante/atrás según hacia donde mire
         if (this.input.joyX !== 0 || this.input.joyY !== 0) {
             if (!this.isDefending) {
-                const camera = this.scene.activeCamera;
-                
-                // Obtener hacia dónde mira la cámara en el plano 2D (suelo)
-                const forward = camera.getForwardRay().direction;
-                forward.y = 0; // Ignorar si miramos arriba o abajo
-                forward.normalize();
-                
-                // Calcular el vector derecho de la cámara (Producto cruz)
-                const right = new BABYLON.Vector3(forward.z, 0, -forward.x);
-                
-                // Mover adelante/atrás basado en joyY, Mover izquierda/derecha basado en joyX
-                const moveX = right.scale(this.input.joyX);
-                const moveZ = forward.scale(this.input.joyY);
-                
-                const moveDirection = moveX.add(moveZ);
-                
-                if (moveDirection.lengthSquared() > 0) {
-                    moveDirection.normalize().scaleInPlace(this.speed);
+                // 1. ROTACIÓN: Rota el cuerpo del jugador
+                const rotationSpeed = 0.05;
+                this.mesh.rotation.y += this.input.joyX * rotationSpeed;
+
+                // 2. TRASLACIÓN: Mueve en la dirección actual de la malla
+                if (Math.abs(this.input.joyY) > 0.1) {
+                    const forward = new BABYLON.Vector3(
+                        Math.sin(this.mesh.rotation.y),
+                        -0.2, // Gravedad
+                        Math.cos(this.mesh.rotation.y)
+                    );
                     
-                    // Rotar hacia la dirección del movimiento
-                    const targetAngle = Math.atan2(moveDirection.x, moveDirection.z);
-                    this.mesh.rotation.y = targetAngle;
-                    
-                    // Gravedad
-                    moveDirection.y = -0.2;
-                    this.mesh.moveWithCollisions(moveDirection);
+                    const moveVector = forward.scale(this.input.joyY * this.speed);
+                    this.mesh.moveWithCollisions(moveVector);
                 }
             }
         } else {
-            // Aplicar siempre gravedad aunque no se mueva
             this.mesh.moveWithCollisions(new BABYLON.Vector3(0, -0.2, 0));
         }
 
         // Acciones y Combate
         if (this.input.actionA && !this.isAttacking && !this.isDefending) {
             if (this.hasSword) {
-                this.attack(chests, enemies); // Pasamos los cofres y enemigos
+                this.attack(chests, enemies); 
             } else {
                 this.input.actionA = false; 
                 this.showMessage("Aún no tienes un arma. Busca en los cofres.");
@@ -120,12 +109,10 @@ export class Player {
             this.stopDefend();
         }
 
-        // Interacción con objetos del entorno (Cofres)
         this.checkInteractables(chests);
     }
 
     showMessage(text) {
-        // Evitar múltiples mensajes si ya está pausado
         if (this.canMove) {
             this.canMove = false;
             this.dialogueManager.startDialogue([
@@ -138,7 +125,6 @@ export class Player {
 
     checkInteractables(chests) {
         if (!chests) return;
-        
         for (let chest of chests) {
             if (!chest.metadata.opened) {
                 const distance = BABYLON.Vector3.Distance(this.mesh.position, chest.position);
@@ -152,64 +138,45 @@ export class Player {
     openChest(chest) {
         chest.metadata.opened = true;
         const itemName = chest.metadata.item;
-        
-        // Efecto visual de "cofre abierto"
         chest.material.emissiveColor = new BABYLON.Color3(0, 0, 0); 
         chest.scaling.y = 0.3; 
         chest.position.y = 0.15; 
-        
-        // Añadir al inventario y hacer visible
         this.inventory.push(itemName);
         if (itemName === "espada") {
             this.hasSword = true;
-            this.swordMesh.isVisible = true; // ¡La espada aparece en la mano!
+            this.swordMesh.isVisible = true; 
         }
         if (itemName === "escudo") {
             this.hasShield = true;
-            this.shieldMesh.isVisible = true; // ¡El escudo aparece en la mano!
+            this.shieldMesh.isVisible = true; 
         }
-        
         this.hud.updateInventory(this.inventory);
         this.showMessage(`¡Has encontrado: ${itemName.toUpperCase()}!`);
     }
 
     attack(destructibles, enemies) {
         this.isAttacking = true;
-        
-        // Animación de ataque (Baja y sube la espada)
         const anim = new BABYLON.Animation("atk", "rotation.x", 45, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
-        const keys = [
-            { frame: 0, value: 0 },
-            { frame: 5, value: Math.PI / 2.5 }, // Golpe seco hacia abajo
-            { frame: 15, value: 0 }
-        ];
+        const keys = [{ frame: 0, value: 0 }, { frame: 5, value: Math.PI / 2.5 }, { frame: 15, value: 0 }];
         anim.setKeys(keys);
         this.mesh.animations = [anim];
         
-        // Dañar Enemigos
         if (enemies) {
             for (let enemy of enemies) {
                 const dist = BABYLON.Vector3.Distance(this.mesh.position, enemy.mesh.position);
-                // Si el enemigo está en rango de espada
-                if (dist < 3.0) {
-                    enemy.takeDamage(10); // Nuestra espada hace 10 de daño
-                }
+                if (dist < 3.0) enemy.takeDamage(10);
             }
         }
 
-        // Detectar si golpea algo rompible (Cofres ya abiertos, por ejemplo)
         if (destructibles) {
             for (let i = 0; i < destructibles.length; i++) {
                 let obj = destructibles[i];
-                // Si el cofre ya fue abierto y el jugador ataca cerca, ¡Lo rompe!
                 if (obj && obj.metadata.opened && !obj.metadata.broken) {
                     const dist = BABYLON.Vector3.Distance(this.mesh.position, obj.position);
                     if (dist < 3.0) {
-                        obj.metadata.broken = true; // Marcar como roto
-                        obj.dispose(); // Destruye el modelo 3D del mundo (desaparece)
-                        
-                        // Pequeño efecto de "salto" de oro visual
-                        this.hud.updateGold(5); // Romper cofres viejos da oro escondido
+                        obj.metadata.broken = true; 
+                        obj.dispose(); 
+                        this.hud.updateGold(5); 
                         this.hud.updateDisplay();
                     }
                 }
@@ -224,24 +191,20 @@ export class Player {
     defend() {
         if (!this.isDefending && !this.isAttacking) {
             this.isDefending = true;
-            
-            // Animación: Poner el escudo frente a él y agacharse ligeramente
             this.mesh.scaling.y = 0.8;
             this.mesh.position.y = 0.8;
-            this.shieldMesh.position.x = 0; // Mueve el escudo al centro
-            this.shieldMesh.position.z = 1.0; // Lo adelanta
-            this.shieldMesh.material.emissiveColor = new BABYLON.Color3(0, 0.5, 1); // Brillo mágico defensivo
+            this.shieldMesh.position.x = 0; 
+            this.shieldMesh.position.z = 1.0; 
+            this.shieldMesh.material.emissiveColor = new BABYLON.Color3(0, 0.5, 1); 
         }
     }
 
     stopDefend() {
         this.isDefending = false;
-        
-        // Volver a la normalidad
         this.mesh.scaling.y = 1;
         this.mesh.position.y = 1;
-        this.shieldMesh.position.x = -0.6; // Vuelve al lado
+        this.shieldMesh.position.x = -0.6; 
         this.shieldMesh.position.z = 0.5;
-        this.shieldMesh.material.emissiveColor = new BABYLON.Color3(0, 0, 0); // Apagar brillo
+        this.shieldMesh.material.emissiveColor = new BABYLON.Color3(0, 0, 0); 
     }
 }

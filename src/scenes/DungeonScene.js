@@ -21,23 +21,23 @@ export class DungeonScene {
         scene.clearColor = new BABYLON.Color3(0.01, 0.01, 0.02);
 
         // Cámara en 3ra persona tipo Shooter / Action RPG
-        // alpha: rotación horizontal, beta: rotación vertical, radius: distancia
+        // La cámara ahora se bloqueará detrás del jugador
         const camera = new BABYLON.ArcRotateCamera("ArcCam", -Math.PI / 2, Math.PI / 3, 15, BABYLON.Vector3.Zero(), scene);
         
-        // Límites estrictos para evitar que la cámara perfore el suelo
-        camera.lowerRadiusLimit = 8;       // No puede acercarse mucho
-        camera.upperRadiusLimit = 25;       // No puede alejarse mucho
-        camera.lowerBetaLimit = 0.1;       // Evita mirar desde abajo del mapa
-        camera.upperBetaLimit = Math.PI / 2.2; // Evita hundirse en el suelo
+        // Límites estrictos
+        camera.lowerRadiusLimit = 10;
+        camera.upperRadiusLimit = 20;
+        camera.lowerBetaLimit = 0.1;
+        camera.upperBetaLimit = Math.PI / 2.2;
         
         camera.checkCollisions = true; 
-        camera.collisionRadius = new BABYLON.Vector3(1, 1, 1); // Tamaño de la cámara para colisiones
+        camera.collisionRadius = new BABYLON.Vector3(1, 1, 1);
         
-        // Permitir que el jugador gire la cámara arrastrando en la pantalla
-        camera.attachControl(this.canvas, true);
+        // Bloqueamos la rotación de la cámara por arrastre para que el joystick mande
+        // camera.attachControl(this.canvas, true); // Comentado para que el movimiento guíe la cámara
         
-        // Eliminar inercia excesiva para un control más estilo Shooter
-        camera.inertia = 0.7; 
+        camera.inertia = 0.5; 
+        camera.angularSensibilityX = 1000; 
 
         // Luz de ambiente oscura (Cueva)
         const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);
@@ -113,6 +113,11 @@ export class DungeonScene {
         scene.onBeforeRenderObservable.add(() => {
             if(player.canMove !== false) {
                 player.update(world.chests, enemies);
+
+                // Hacer que la cámara rote horizontalmente para estar siempre detrás del jugador
+                // Invertimos el ángulo para que coincida con el sistema de ArcRotateCamera
+                camera.alpha = -player.mesh.rotation.y - Math.PI / 2;
+                camera.target = player.mesh.position;
                 
                 // Limpiar enemigos muertos del array y actualizar los vivos
                 for (let i = enemies.length - 1; i >= 0; i--) {
