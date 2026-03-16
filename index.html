@@ -2,16 +2,28 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Mundo Abierto con Joystick y Colisiones</title>
+  <title>Mundo Abierto Joystick Consola</title>
   <style>
     html, body { width:100%; height:100%; margin:0; overflow:hidden; }
     #renderCanvas { width:100%; height:100%; touch-action:none; }
 
-    /* Joystick a la izquierda */
+    /* HUD de vida */
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Joystick a la izquierda, más centrado */
     .joystick {
       position: absolute;
-      bottom: 100px;
-      left: 40px;
+      bottom: 60px;
+      left: 80px;
       width: 160px;
       height: 160px;
       background: rgba(100,100,100,0.3);
@@ -28,36 +40,24 @@
       border-radius: 50%;
     }
 
-    /* Botones a la derecha */
+    /* Botones a la derecha, más centrados */
     .buttons {
       position: absolute;
-      bottom: 40px;
-      right: 40px;
+      bottom: 60px;
+      right: 80px;
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 20px;
     }
     .btn {
       background: #444;
       color: white;
-      font-size: 22px;
-      padding: 20px;
+      font-size: 24px;
+      padding: 25px;
       border-radius: 50%;
       border: none;
-      width: 70px;
-      height: 70px;
-    }
-
-    /* HUD de vida */
-    #hud {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: rgba(0,0,0,0.5);
-      color: white;
-      padding: 5px 10px;
-      border-radius: 5px;
-      font-family: Arial, sans-serif;
+      width: 80px;
+      height: 80px;
     }
   </style>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -178,15 +178,6 @@
       if (player.position.x < -24) player.position.x = -24;
       if (player.position.z > 24) player.position.z = 24;
       if (player.position.z < -24) player.position.z = -24;
-
-      // Colisión con objetos (ejemplo: daño si toca)
-      items.forEach(item => {
-        if (BABYLON.Vector3.Distance(player.position, item.position) < 1.5) {
-          life -= 1;
-          if (life < 0) life = 0;
-          lifeDisplay.textContent = life;
-        }
-      });
 
       camera.target = player.position;
     });
