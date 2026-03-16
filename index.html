@@ -2,10 +2,51 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Mundo Abierto con Vida y Objetos</title>
+  <title>Mundo Abierto con Joystick y Colisiones</title>
   <style>
     html, body { width:100%; height:100%; margin:0; overflow:hidden; }
     #renderCanvas { width:100%; height:100%; touch-action:none; }
+
+    /* Joystick a la izquierda */
+    .joystick {
+      position: absolute;
+      bottom: 100px;
+      left: 40px;
+      width: 160px;
+      height: 160px;
+      background: rgba(100,100,100,0.3);
+      border-radius: 50%;
+      touch-action: none;
+    }
+    .stick {
+      position: absolute;
+      top: 60px;
+      left: 60px;
+      width: 40px;
+      height: 40px;
+      background: rgba(200,200,200,0.8);
+      border-radius: 50%;
+    }
+
+    /* Botones a la derecha */
+    .buttons {
+      position: absolute;
+      bottom: 40px;
+      right: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+    .btn {
+      background: #444;
+      color: white;
+      font-size: 22px;
+      padding: 20px;
+      border-radius: 50%;
+      border: none;
+      width: 70px;
+      height: 70px;
+    }
 
     /* HUD de vida */
     #hud {
@@ -17,47 +58,6 @@
       padding: 5px 10px;
       border-radius: 5px;
       font-family: Arial, sans-serif;
-    }
-
-    /* Joystick */
-    .joystick {
-      position: absolute;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 140px;
-      height: 140px;
-      background: rgba(100,100,100,0.3);
-      border-radius: 50%;
-      touch-action: none;
-    }
-    .stick {
-      position: absolute;
-      top: 50px;
-      left: 50px;
-      width: 40px;
-      height: 40px;
-      background: rgba(200,200,200,0.8);
-      border-radius: 50%;
-    }
-
-    /* Botones extra */
-    .buttons {
-      position: absolute;
-      bottom: 20px;
-      width: 100%;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-    }
-    .btn {
-      background: #444;
-      color: white;
-      font-size: 20px;
-      padding: 15px;
-      border-radius: 8px;
-      border: none;
-      width: 70px;
     }
   </style>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
@@ -71,10 +71,11 @@
   <div class="stick" id="stick"></div>
 </div>
 
-<!-- Botones extra -->
+<!-- Botones -->
 <div class="buttons">
   <button class="btn" id="attack">⚔️</button>
   <button class="btn" id="interact">🎁</button>
+  <button class="btn" id="jump">⤴️</button>
 </div>
 
 <script>
@@ -86,7 +87,7 @@
     scene.clearColor = new BABYLON.Color3(0.5, 0.8, 1);
 
     // Cámara
-    const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI/2, Math.PI/3, 15, BABYLON.Vector3.Zero(), scene);
+    const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI/2, Math.PI/3, 20, BABYLON.Vector3.Zero(), scene);
     camera.attachControl(canvas, true);
 
     // Luz
@@ -105,13 +106,13 @@
     let life = 100;
     const lifeDisplay = document.getElementById("life");
 
-    // Objetos recolectables
+    // Objetos
     const items = [];
     for (let i=0; i<5; i++) {
       const item = BABYLON.MeshBuilder.CreateSphere("item"+i, {diameter:1}, scene);
-      item.position.set(Math.random()*20-10, 0.5, Math.random()*20-10);
+      item.position.set(Math.random()*40-20, 0.5, Math.random()*40-20);
       item.material = new BABYLON.StandardMaterial("imat", scene);
-      item.material.diffuseColor = new BABYLON.Color3(1,1,0); // amarillo
+      item.material.diffuseColor = new BABYLON.Color3(1,1,0);
       items.push(item);
     }
 
@@ -127,33 +128,32 @@
       let dx = touch.clientX - centerX;
       let dy = touch.clientY - centerY;
       let dist = Math.sqrt(dx*dx + dy*dy);
-      let maxDist = 60;
+      let maxDist = 70;
       if (dist > maxDist) {
         dx *= maxDist/dist;
         dy *= maxDist/dist;
       }
-      stick.style.left = (dx + 50) + "px";
-      stick.style.top = (dy + 50) + "px";
-      moveX = dx/60 * 0.2;
-      moveZ = dy/60 * 0.2;
+      stick.style.left = (dx + 60) + "px";
+      stick.style.top = (dy + 60) + "px";
+      moveX = dx/70 * 0.3;
+      moveZ = dy/70 * 0.3;
     });
 
     joystick.addEventListener("touchend", () => {
-      stick.style.left = "50px";
-      stick.style.top = "50px";
+      stick.style.left = "60px";
+      stick.style.top = "60px";
       moveX = 0; moveZ = 0;
     });
 
-    // Botón ataque
+    // Botones
     document.getElementById("attack").addEventListener("touchstart", () => {
       life -= 10;
       if (life < 0) life = 0;
       lifeDisplay.textContent = life;
     });
 
-    // Botón interactuar (recoger objetos cercanos)
     document.getElementById("interact").addEventListener("touchstart", () => {
-      items.forEach((item, i) => {
+      items.forEach(item => {
         if (BABYLON.Vector3.Distance(player.position, item.position) < 3) {
           item.dispose();
           life += 10;
@@ -163,10 +163,31 @@
       });
     });
 
-    // Loop
+    document.getElementById("jump").addEventListener("touchstart", () => {
+      player.position.y += 2;
+      setTimeout(() => player.position.y -= 2, 500);
+    });
+
+    // Loop con colisiones y límites
     scene.onBeforeRenderObservable.add(() => {
       player.position.x += moveX;
       player.position.z += moveZ;
+
+      // Límites del mapa
+      if (player.position.x > 24) player.position.x = 24;
+      if (player.position.x < -24) player.position.x = -24;
+      if (player.position.z > 24) player.position.z = 24;
+      if (player.position.z < -24) player.position.z = -24;
+
+      // Colisión con objetos (ejemplo: daño si toca)
+      items.forEach(item => {
+        if (BABYLON.Vector3.Distance(player.position, item.position) < 1.5) {
+          life -= 1;
+          if (life < 0) life = 0;
+          lifeDisplay.textContent = life;
+        }
+      });
+
       camera.target = player.position;
     });
 
