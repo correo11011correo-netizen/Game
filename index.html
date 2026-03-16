@@ -55,7 +55,7 @@ const createScene = () => {
   const scene = new BABYLON.Scene(engine);
   scene.clearColor = new BABYLON.Color3(0.5,0.8,1);
 
-  const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI/2, Math.PI/3, 30, BABYLON.Vector3.Zero(), scene);
+  const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI/2, Math.PI/3, 40, BABYLON.Vector3.Zero(), scene);
   camera.attachControl(canvas, true);
 
   const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0,1,0), scene);
@@ -99,8 +99,8 @@ const createScene = () => {
     if (dist > maxDist) { dx *= maxDist/dist; dy *= maxDist/dist; }
     stick.style.left = (dx + 70) + "px";
     stick.style.top = (dy + 70) + "px";
-    joyX = dx/80;
-    joyY = dy/80;
+    joyX = dx/80;   // izquierda/derecha
+    joyY = dy/80;   // adelante/atrás
   }, { passive:false });
 
   joystick.addEventListener("touchend", e => {
@@ -113,20 +113,15 @@ const createScene = () => {
   document.getElementById("kick").addEventListener("touchstart", e => {
     e.preventDefault();
     if (BABYLON.Vector3.Distance(player.position, ball.position) < 3) {
-      const forward = camera.getForwardRay().direction;
-      ballVel.addInPlace(forward.scale(1.2));
+      ballVel.z -= 1.2; // siempre hacia el arco (Z negativo)
     }
   }, { passive:false });
 
   // Loop
   scene.onBeforeRenderObservable.add(() => {
-    // Movimiento relativo a cámara
-    const forward = camera.getForwardRay().direction.clone();
-    forward.y = 0; forward.normalize();
-    const right = BABYLON.Vector3.Cross(forward, BABYLON.Vector3.Up()).normalize();
-
-    const moveVec = forward.scale(-joyY*0.5).add(right.scale(joyX*0.5));
-    player.position.addInPlace(moveVec);
+    // Movimiento: arriba = adelante (Z negativo), abajo = atrás (Z positivo)
+    player.position.x += joyX * 0.5;
+    player.position.z += joyY * 0.5;
 
     // Pegado al piso
     player.position.y = 1;
