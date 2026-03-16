@@ -45,6 +45,43 @@ export class DungeonGenerator {
         this.createChest("chest_sword", "espada", -10, 0.5, 12);
         // Cofre con el Escudo viejo
         this.createChest("chest_shield", "escudo", 10, 0.5, 12);
+
+        // --- DECORACIÓN: Antorchas de luz amarilla en los muros ---
+        // Muro Norte
+        this.createTorch("torch_n1", -10, 2.5, 19.5);
+        this.createTorch("torch_n2", 10, 2.5, 19.5);
+        // Muro Sur
+        this.createTorch("torch_s1", -10, 2.5, -19.5);
+        this.createTorch("torch_s2", 10, 2.5, -19.5);
+        // Muro Este
+        this.createTorch("torch_e1", 19.5, 2.5, -10);
+        this.createTorch("torch_e2", 19.5, 2.5, 10);
+        // Muro Oeste
+        this.createTorch("torch_w1", -19.5, 2.5, -10);
+        this.createTorch("torch_w2", -19.5, 2.5, 10);
+    }
+
+    createTorch(id, x, y, z) {
+        // 1. Soporte físico de la antorcha (Un pequeño bloque de madera)
+        const holder = BABYLON.MeshBuilder.CreateBox(`${id}_holder`, { width: 0.2, height: 0.5, depth: 0.2 }, this.scene);
+        holder.position.set(x, y, z);
+        
+        // 2. Fuego (La punta incandescente)
+        const fire = BABYLON.MeshBuilder.CreateBox(`${id}_fire`, { width: 0.3, height: 0.3, depth: 0.3 }, this.scene);
+        fire.position.set(x, y + 0.3, z);
+        
+        // Material del fuego que "brilla en la oscuridad"
+        const fireMat = new BABYLON.StandardMaterial(`${id}_fireMat`, this.scene);
+        fireMat.diffuseColor = new BABYLON.Color3(1, 0.5, 0); // Naranja base
+        fireMat.emissiveColor = new BABYLON.Color3(1, 0.8, 0); // Brillo amarillo fuerte
+        fireMat.disableLighting = true; // No le afecta la sombra, él emite luz
+        fire.material = fireMat;
+
+        // 3. Luz real (PointLight) que ilumina el muro cercano
+        const light = new BABYLON.PointLight(`${id}_light`, new BABYLON.Vector3(x, y + 0.5, z), this.scene);
+        light.diffuse = new BABYLON.Color3(1, 0.8, 0.2); // Color amarillo fuego cálido
+        light.intensity = 1.2; // Brillo
+        light.range = 10; // Distancia a la que llega la luz de la antorcha
     }
 
     createWall(name, w, h, d, x, y, z) {
