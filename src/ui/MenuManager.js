@@ -26,7 +26,8 @@ export class MenuManager {
         this.config = {
             cameraMode: "TOP_DOWN",
             shadows: true,
-            hero: "mago"
+            hero: "mago",
+            texturePack: "classic" // Nuevo parámetro
         };
     }
 
@@ -54,6 +55,10 @@ export class MenuManager {
                 break;
             }
         }
+        
+        const txSelect = document.getElementById("texturePackSelect");
+        if (txSelect) this.config.texturePack = txSelect.value;
+        
         this.config.shadows = document.getElementById("chkShadows").checked;
 
         this.settingsMenu.style.display = "none";

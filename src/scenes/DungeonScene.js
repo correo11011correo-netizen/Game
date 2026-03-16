@@ -34,7 +34,8 @@ export class DungeonScene {
 
         // Inicializar Gestor de Assets y Sonidos
         this.assetManager = new AssetManager(scene);
-        await this.assetManager.loadDungeonAssets();
+        const texturePackStyle = config.texturePack || "classic";
+        await this.assetManager.loadDungeonAssets(texturePackStyle);
         this.soundManager = new SoundManager();
 
         this.camera = new BABYLON.ArcRotateCamera("ArcCam", -Math.PI / 2, Math.PI / 3, 15, BABYLON.Vector3.Zero(), scene);
