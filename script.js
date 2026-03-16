@@ -66,20 +66,42 @@ const createScene = () => {
     joyX = 0; joyY = 0;
   }, { passive:false });
 
-  // Botón acción genérico
-  let score = 0;
+  // Variables de estado del jugador
+  let scoreA = 0;
+  let scoreB = 0;
+  let playerVelocityY = 0;
+  let isGrounded = true;
+
   const scoreDisplay = document.createElement("div");
   scoreDisplay.style.position = "absolute";
   scoreDisplay.style.top = "10px";
   scoreDisplay.style.left = "10px";
   scoreDisplay.style.color = "white";
-  scoreDisplay.textContent = score;
+  scoreDisplay.style.fontSize = "20px";
+  scoreDisplay.style.fontFamily = "sans-serif";
+  scoreDisplay.textContent = `A: ${scoreA} | B: ${scoreB}`;
   document.body.appendChild(scoreDisplay);
 
-  document.getElementById("action").addEventListener("touchstart", e => {
+  // Lógica Botón A (Ejemplo: Salto)
+  document.getElementById("actionA").addEventListener("touchstart", e => {
     e.preventDefault();
-    score++;
-    scoreDisplay.textContent = score;
+    scoreA++;
+    scoreDisplay.textContent = `A: ${scoreA} | B: ${scoreB}`;
+    if (isGrounded) {
+      playerVelocityY = 0.4; // Fuerza del salto
+      isGrounded = false;
+    }
+  }, { passive:false });
+
+  // Lógica Botón B (Ejemplo: Acción secundaria / Agacharse)
+  document.getElementById("actionB").addEventListener("touchstart", e => {
+    e.preventDefault();
+    scoreB++;
+    scoreDisplay.textContent = `A: ${scoreA} | B: ${scoreB}`;
+    // Cambiamos la escala como ejemplo de acción B
+    player.scaling.y = player.scaling.y === 1 ? 0.5 : 1;
+    // Ajustamos la posición y para que no quede flotando si se hace más pequeño
+    if (isGrounded) player.position.y = player.scaling.y; 
   }, { passive:false });
 
   // Botón de créditos
@@ -105,11 +127,24 @@ const createScene = () => {
     }
   });
 
-  // Loop de movimiento
+  // Loop de movimiento y físicas
   scene.onBeforeRenderObservable.add(() => {
     player.position.x += joyX * 0.1;
     player.position.z += joyY * 0.1;
-    player.position.y = 1;
+    
+    // Aplicar gravedad simple
+    if (!isGrounded) {
+      player.position.y += playerVelocityY;
+      playerVelocityY -= 0.02; // Fuerza de gravedad
+      
+      // Colisión con el suelo
+      let baseHeight = player.scaling.y; // Si está agachado la altura base es menor
+      if (player.position.y <= baseHeight) {
+        player.position.y = baseHeight;
+        isGrounded = true;
+        playerVelocityY = 0;
+      }
+    }
   });
 
   return scene;
