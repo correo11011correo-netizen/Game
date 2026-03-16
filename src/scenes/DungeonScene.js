@@ -3,6 +3,7 @@ import { HUD } from '../ui/HUD.js';
 import { Player } from '../entities/Player.js';
 import { DungeonGenerator } from '../world/DungeonGenerator.js';
 import { DialogueManager } from '../ui/DialogueManager.js';
+import { ShadowRat } from '../entities/enemies/ShadowRat.js';
 
 export class DungeonScene {
     constructor(engine, canvas) {
@@ -70,6 +71,12 @@ export class DungeonScene {
         playerLight.parent = player.mesh; // El aura lo sigue
         flashlight.parent = player.mesh; // La linterna lo sigue y apunta hacia donde mira
 
+        // Generar algunos enemigos
+        const enemies = [];
+        enemies.push(new ShadowRat(scene, player, 0, 18));
+        enemies.push(new ShadowRat(scene, player, 8, -12));
+        enemies.push(new ShadowRat(scene, player, -12, -8));
+
         // Bloquear movimiento temporalmente para el inicio
         player.canMove = false; 
 
@@ -97,7 +104,16 @@ export class DungeonScene {
         // Bucle Principal
         scene.onBeforeRenderObservable.add(() => {
             if(player.canMove !== false) {
-                player.update(world.chests);
+                player.update(world.chests, enemies);
+                
+                // Limpiar enemigos muertos del array y actualizar los vivos
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    if (enemies[i].hp <= 0) {
+                        enemies.splice(i, 1);
+                    } else {
+                        enemies[i].update();
+                    }
+                }
             }
         });
 

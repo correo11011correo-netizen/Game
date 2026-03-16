@@ -60,7 +60,7 @@ export class Player {
         this.shieldMesh.material = shieldMat;
     }
 
-    update(chests) {
+    update(chests, enemies) {
         if (!this.canMove) return;
 
         // Moverse usando Físicas (moveWithCollisions)
@@ -79,7 +79,7 @@ export class Player {
         // Acciones y Combate
         if (this.input.actionA && !this.isAttacking && !this.isDefending) {
             if (this.hasSword) {
-                this.attack(chests); // Pasamos los cofres para poder romperlos
+                this.attack(chests, enemies); // Pasamos los cofres y enemigos
             } else {
                 this.input.actionA = false; 
                 this.showMessage("Aún no tienes un arma. Busca en los cofres.");
@@ -150,7 +150,7 @@ export class Player {
         this.showMessage(`¡Has encontrado: ${itemName.toUpperCase()}!`);
     }
 
-    attack(destructibles) {
+    attack(destructibles, enemies) {
         this.isAttacking = true;
         
         // Animación de ataque (Baja y sube la espada)
@@ -163,6 +163,17 @@ export class Player {
         anim.setKeys(keys);
         this.mesh.animations = [anim];
         
+        // Dañar Enemigos
+        if (enemies) {
+            for (let enemy of enemies) {
+                const dist = BABYLON.Vector3.Distance(this.mesh.position, enemy.mesh.position);
+                // Si el enemigo está en rango de espada
+                if (dist < 3.0) {
+                    enemy.takeDamage(10); // Nuestra espada hace 10 de daño
+                }
+            }
+        }
+
         // Detectar si golpea algo rompible (Cofres ya abiertos, por ejemplo)
         if (destructibles) {
             for (let i = 0; i < destructibles.length; i++) {
