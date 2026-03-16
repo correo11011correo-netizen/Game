@@ -3,6 +3,7 @@ import { HUD } from '../ui/HUD.js';
 import { Player } from '../entities/Player.js';
 import { DungeonGenerator } from '../world/DungeonGenerator.js';
 import { DialogueManager } from '../ui/DialogueManager.js';
+import { Minimap } from '../ui/Minimap.js';
 import { ShadowRat } from '../entities/enemies/ShadowRat.js';
 import { TopDownController } from '../controllers/TopDownController.js';
 import { ShooterController } from '../controllers/ShooterController.js';
@@ -23,7 +24,7 @@ export class DungeonScene {
         this.config = config;
         this.scene = new BABYLON.Scene(this.engine);
         const scene = this.scene;
-        scene.paused = false; // Propiedad personalizada para el bucle
+        scene.paused = false;
         scene.collisionsEnabled = true;
         scene.clearColor = new BABYLON.Color3(0.01, 0.01, 0.02);
 
@@ -53,6 +54,7 @@ export class DungeonScene {
         this.input = new InputController();
         const hud = new HUD();
         const dialogue = new DialogueManager();
+        const minimap = new Minimap();
         
         const world = new DungeonGenerator(scene);
         world.generate();
@@ -61,7 +63,6 @@ export class DungeonScene {
         playerLight.parent = this.player.mesh;
         flashlight.parent = this.player.mesh;
 
-        // Cargar controlador inicial
         this.applyConfig(config);
 
         const enemies = [];
@@ -76,7 +77,7 @@ export class DungeonScene {
         this.player.canMove = false; 
 
         setTimeout(() => {
-            if (scene.paused) return; // No lanzar si pausó antes de tiempo
+            if (scene.paused) return; 
             dialogue.startDialogue([
                 { speaker: "Voz Desconocida", text: "¿Aún respiras, Buscador?" },
                 { speaker: "Tú", text: "¿Dónde... dónde estoy? Mi cabeza da vueltas..." },
@@ -114,6 +115,9 @@ export class DungeonScene {
                         enemies[i].update();
                     }
                 }
+
+                // Actualizar el Minimapa Mágico
+                minimap.update(this.player, world.chests, enemies);
             }
         });
 
@@ -124,11 +128,8 @@ export class DungeonScene {
         return scene;
     }
 
-    // Método para aplicar cambios en vivo (como cambiar la cámara desde el menú de pausa)
     applyConfig(newConfig) {
         this.config = newConfig;
-        
-        // Limpiar controles anteriores
         this.camera.detachControl();
 
         if (this.config.cameraMode === "TOP_DOWN") {
@@ -136,7 +137,5 @@ export class DungeonScene {
         } else if (this.config.cameraMode === "SHOOTER") {
             this.controller = new ShooterController(this.camera, this.player, this.input, this.canvas);
         }
-        
-        // Futuro: Aplicar config de Sombras si se añaden DirectionalLights y ShadowGenerators
     }
 }
