@@ -4,10 +4,14 @@ export class TopDownController {
         this.player = player;
         this.input = input;
         
-        // Configuración de la Cámara Cenital / Isométrica
+        // Configuración de la Cámara Estilo Brawl Stars (Cenital)
         this.camera.alpha = -Math.PI / 2;
-        this.camera.beta = Math.PI / 3; // Ángulo picado
-        this.camera.radius = 20; // Más lejos para ver más terreno
+        this.camera.beta = 0.2; // Muy cerca de 0 para ver casi totalmente desde arriba
+        this.camera.radius = 28; // Más lejos para un campo de visión amplio
+        
+        // Bloquear límites para que el usuario no pueda rotarla accidentalmente
+        this.camera.lowerBetaLimit = 0.2;
+        this.camera.upperBetaLimit = 0.2;
         
         // IMPORTANTE: Desactivar rotación táctil de pantalla en este modo
         this.camera.detachControl(); 
