@@ -2,37 +2,81 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>Mundo Abierto con Joystick</title>
+  <title>Mundo Abierto con Vida y Objetos</title>
   <style>
     html, body { width:100%; height:100%; margin:0; overflow:hidden; }
     #renderCanvas { width:100%; height:100%; touch-action:none; }
+
+    /* HUD de vida */
+    #hud {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.5);
+      color: white;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Joystick */
     .joystick {
       position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 120px;
-      height: 120px;
+      bottom: 100px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 140px;
       background: rgba(100,100,100,0.3);
       border-radius: 50%;
       touch-action: none;
     }
     .stick {
       position: absolute;
-      top: 40px;
-      left: 40px;
+      top: 50px;
+      left: 50px;
       width: 40px;
       height: 40px;
       background: rgba(200,200,200,0.8);
       border-radius: 50%;
+    }
+
+    /* Botones extra */
+    .buttons {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+    }
+    .btn {
+      background: #444;
+      color: white;
+      font-size: 20px;
+      padding: 15px;
+      border-radius: 8px;
+      border: none;
+      width: 70px;
     }
   </style>
   <script src="https://cdn.babylonjs.com/babylon.js"></script>
 </head>
 <body>
 <canvas id="renderCanvas"></canvas>
+<div id="hud">❤️ Vida: <span id="life">100</span></div>
+
+<!-- Joystick -->
 <div class="joystick" id="joystick">
   <div class="stick" id="stick"></div>
 </div>
+
+<!-- Botones extra -->
+<div class="buttons">
+  <button class="btn" id="attack">⚔️</button>
+  <button class="btn" id="interact">🎁</button>
+</div>
+
 <script>
   const canvas = document.getElementById("renderCanvas");
   const engine = new BABYLON.Engine(canvas, true);
@@ -41,7 +85,7 @@
     const scene = new BABYLON.Scene(engine);
     scene.clearColor = new BABYLON.Color3(0.5, 0.8, 1);
 
-    // Cámara en tercera persona
+    // Cámara
     const camera = new BABYLON.ArcRotateCamera("cam", -Math.PI/2, Math.PI/3, 15, BABYLON.Vector3.Zero(), scene);
     camera.attachControl(canvas, true);
 
@@ -51,13 +95,27 @@
     // Terreno
     const ground = BABYLON.MeshBuilder.CreateGround("ground", {width:50, height:50}, scene);
 
-    // Personaje jugador
+    // Jugador
     const player = BABYLON.MeshBuilder.CreateBox("player", {size:2}, scene);
     player.position.y = 1;
     player.material = new BABYLON.StandardMaterial("pmat", scene);
     player.material.diffuseColor = new BABYLON.Color3(0,0,1);
 
-    // Joystick virtual
+    // Vida
+    let life = 100;
+    const lifeDisplay = document.getElementById("life");
+
+    // Objetos recolectables
+    const items = [];
+    for (let i=0; i<5; i++) {
+      const item = BABYLON.MeshBuilder.CreateSphere("item"+i, {diameter:1}, scene);
+      item.position.set(Math.random()*20-10, 0.5, Math.random()*20-10);
+      item.material = new BABYLON.StandardMaterial("imat", scene);
+      item.material.diffuseColor = new BABYLON.Color3(1,1,0); // amarillo
+      items.push(item);
+    }
+
+    // Joystick
     const joystick = document.getElementById("joystick");
     const stick = document.getElementById("stick");
     let centerX = joystick.offsetLeft + joystick.offsetWidth/2;
@@ -69,23 +127,43 @@
       let dx = touch.clientX - centerX;
       let dy = touch.clientY - centerY;
       let dist = Math.sqrt(dx*dx + dy*dy);
-      let maxDist = 50;
+      let maxDist = 60;
       if (dist > maxDist) {
         dx *= maxDist/dist;
         dy *= maxDist/dist;
       }
-      stick.style.left = (dx + 40) + "px";
-      stick.style.top = (dy + 40) + "px";
-      moveX = dx/50 * 0.2;
-      moveZ = dy/50 * 0.2;
+      stick.style.left = (dx + 50) + "px";
+      stick.style.top = (dy + 50) + "px";
+      moveX = dx/60 * 0.2;
+      moveZ = dy/60 * 0.2;
     });
 
     joystick.addEventListener("touchend", () => {
-      stick.style.left = "40px";
-      stick.style.top = "40px";
+      stick.style.left = "50px";
+      stick.style.top = "50px";
       moveX = 0; moveZ = 0;
     });
 
+    // Botón ataque
+    document.getElementById("attack").addEventListener("touchstart", () => {
+      life -= 10;
+      if (life < 0) life = 0;
+      lifeDisplay.textContent = life;
+    });
+
+    // Botón interactuar (recoger objetos cercanos)
+    document.getElementById("interact").addEventListener("touchstart", () => {
+      items.forEach((item, i) => {
+        if (BABYLON.Vector3.Distance(player.position, item.position) < 3) {
+          item.dispose();
+          life += 10;
+          if (life > 100) life = 100;
+          lifeDisplay.textContent = life;
+        }
+      });
+    });
+
+    // Loop
     scene.onBeforeRenderObservable.add(() => {
       player.position.x += moveX;
       player.position.z += moveZ;
