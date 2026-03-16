@@ -15,6 +15,19 @@ canvas {
   touch-action: none;
   display: block;
 }
+/* Punto de Mira Shooter */
+#crosshair {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 32px;
+  font-family: Arial, sans-serif;
+  pointer-events: none; /* No bloquea el touch */
+  user-select: none;
+  z-index: 500;
+}
+
 #ui-layer {
   position: absolute;
   top: 0; left: 0; right: 0; bottom: 0;

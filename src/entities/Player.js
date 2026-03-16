@@ -11,11 +11,11 @@ export class Player {
         
         // Físicas: Darle masa sólida al jugador
         this.mesh.checkCollisions = true; 
-        this.mesh.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5); // El "tamaño" de su cuerpo para chocar
+        this.mesh.ellipsoid = new BABYLON.Vector3(0.5, 1, 0.5); 
         this.mesh.ellipsoidOffset = new BABYLON.Vector3(0, 1, 0);
 
         const mat = new BABYLON.StandardMaterial("playerMat", scene);
-        mat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.8); // Color de la túnica
+        mat.diffuseColor = new BABYLON.Color3(0.2, 0.5, 0.8); 
         this.mesh.material = mat;
 
         this.speed = 0.2; 
@@ -28,7 +28,7 @@ export class Player {
         this.hasSword = false;
         this.hasShield = false;
         
-        // Modelos visuales de las armas (Ocultos al inicio)
+        // Modelos visuales de las armas
         this.createVisualWeapons();
         
         // Orientación independiente
@@ -36,10 +36,9 @@ export class Player {
     }
 
     createVisualWeapons() {
-        // Espada Visual
         this.swordMesh = BABYLON.MeshBuilder.CreateBox("sword", { width: 0.2, height: 1.5, depth: 0.2 }, this.scene);
-        this.swordMesh.position = new BABYLON.Vector3(0.6, 0.5, 0.5); // Lado derecho
-        this.swordMesh.rotation.x = Math.PI / 2; // Apuntando hacia adelante
+        this.swordMesh.position = new BABYLON.Vector3(0.6, 0.5, 0.5); 
+        this.swordMesh.rotation.x = Math.PI / 2; 
         this.swordMesh.parent = this.mesh;
         this.swordMesh.isVisible = false; 
         
@@ -47,9 +46,8 @@ export class Player {
         swordMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.8); 
         this.swordMesh.material = swordMat;
 
-        // Escudo Visual
         this.shieldMesh = BABYLON.MeshBuilder.CreateCylinder("shield", { height: 0.1, diameter: 1.2 }, this.scene);
-        this.shieldMesh.position = new BABYLON.Vector3(-0.6, 0.5, 0.5); // Lado izquierdo
+        this.shieldMesh.position = new BABYLON.Vector3(-0.6, 0.5, 0.5); 
         this.shieldMesh.rotation.x = Math.PI / 2;
         this.shieldMesh.rotation.z = Math.PI / 2;
         this.shieldMesh.parent = this.mesh;
@@ -63,43 +61,46 @@ export class Player {
     update(chests, enemies) {
         if (!this.canMove) return;
 
-        // 1. ROTACIÓN: El jugador siempre mira hacia donde apunta la cámara (Touch en pantalla)
         const camera = this.scene.activeCamera;
-        if (camera) {
-            this.mesh.rotation.y = -camera.alpha - Math.PI / 2;
-        }
+        if (!camera) return;
 
-        // 2. TRASLACIÓN: El Joystick mueve al jugador relativo a su nueva visión
+        // 1. ROTACIÓN SHOOTER: El personaje siempre se orienta hacia donde mira la cámara
+        // Obtenemos el vector "Adelante" de la cámara
+        const cameraForward = camera.getForwardRay().direction;
+        // Calculamos el ángulo en el plano XZ (suelo)
+        const targetRotationY = Math.atan2(cameraForward.x, cameraForward.z);
+        
+        // Sincronizar rotación del personaje con la cámara
+        this.mesh.rotation.y = targetRotationY;
+
+        // 2. TRASLACIÓN: Movimiento relativo a la rotación actual (Strafing)
         if (this.input.joyX !== 0 || this.input.joyY !== 0) {
             if (!this.isDefending) {
-                // Vector adelante (Hacia donde mira)
+                // Vector Adelante del personaje
                 const forward = new BABYLON.Vector3(
                     Math.sin(this.mesh.rotation.y),
                     0,
                     Math.cos(this.mesh.rotation.y)
                 );
                 
-                // Vector derecha (Para caminar de lado / Strafing)
+                // Vector Derecha del personaje
                 const right = new BABYLON.Vector3(
                     Math.cos(this.mesh.rotation.y),
                     0,
                     -Math.sin(this.mesh.rotation.y)
                 );
                 
-                // Calcular movimiento final combinando los ejes del joystick
-                const moveX = right.scale(this.input.joyX);
-                const moveZ = forward.scale(this.input.joyY);
-                
-                const moveDirection = moveX.add(moveZ);
+                // Combinar ejes del joystick para movimiento lateral o frontal
+                const moveDirection = right.scale(this.input.joyX).add(forward.scale(this.input.joyY));
                 
                 if (moveDirection.lengthSquared() > 0) {
                     moveDirection.normalize().scaleInPlace(this.speed);
-                    moveDirection.y = -0.2; // Añadir gravedad
+                    moveDirection.y = -0.2; // Gravedad constante
                     this.mesh.moveWithCollisions(moveDirection);
                 }
             }
         } else {
-            // Aplicar gravedad siempre aunque no se toque el joystick
+            // Aplicar gravedad siempre
             this.mesh.moveWithCollisions(new BABYLON.Vector3(0, -0.2, 0));
         }
 
