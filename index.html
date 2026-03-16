@@ -61,18 +61,20 @@ const createScene = () => {
 
   const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(0,1,0), scene);
 
-  // Cancha con textura de pasto
+  // Cancha con césped
   const ground = BABYLON.MeshBuilder.CreateGround("ground", {width:60, height:40}, scene);
   const grassMat = new BABYLON.StandardMaterial("grass", scene);
-  grassMat.diffuseTexture = new BABYLON.Texture("https://assets.babylonjs.com/environments/grass.jpg", scene);
+  grassMat.diffuseTexture = new BABYLON.Texture("https://playground.babylonjs.com/textures/grass.jpg", scene);
+  grassMat.diffuseTexture.uScale = 10;
+  grassMat.diffuseTexture.vScale = 10;
   ground.material = grassMat;
 
-  // Jugador estilo personaje (GLTF)
+  // Jugador estilo personaje
   let player;
   BABYLON.SceneLoader.ImportMesh("", "https://models.babylonjs.com/", "dummy3.babylon", scene, (meshes) => {
     player = meshes[0];
     player.scaling = new BABYLON.Vector3(0.5,0.5,0.5);
-    player.position.set(0,0,10);
+    player.position.set(0,0, -10); // empieza atrás
   });
 
   // Pelota
@@ -81,9 +83,9 @@ const createScene = () => {
   ball.material = new BABYLON.StandardMaterial("bmat", scene);
   ball.material.diffuseColor = new BABYLON.Color3(1,1,1);
 
-  // Arco
+  // Arco al frente (Z positivo)
   const goal = BABYLON.MeshBuilder.CreateBox("goal", {width:10, height:5, depth:1}, scene);
-  goal.position.set(0,2,-18);
+  goal.position.set(0,2,18);
   goal.material = new BABYLON.StandardMaterial("gmat", scene);
   goal.material.diffuseColor = new BABYLON.Color3(0,1,0);
 
@@ -123,7 +125,7 @@ const createScene = () => {
   document.getElementById("kick").addEventListener("touchstart", e => {
     e.preventDefault();
     if (player && BABYLON.Vector3.Distance(player.position, ball.position) < 3) {
-      ballVel.z -= 1.2; // hacia el arco
+      ballVel.z += 1.2; // hacia el arco (Z positivo)
     }
   }, { passive:false });
 
@@ -137,7 +139,7 @@ const createScene = () => {
 
     ball.position.addInPlace(ballVel);
     ballVel.scaleInPlace(0.95);
-    ball.position.y = 0.5; // pegada al piso
+    ball.position.y = 0.5;
 
     // Límites cancha
     if (player) {
@@ -148,7 +150,7 @@ const createScene = () => {
     ball.position.z = Math.max(-19, Math.min(19, ball.position.z));
 
     // Gol
-    if (ball.position.z < -17 && Math.abs(ball.position.x) < 5) {
+    if (ball.position.z > 17 && Math.abs(ball.position.x) < 5) {
       score++;
       scoreDisplay.textContent = score;
       ball.position.set(0,0.5,0);
