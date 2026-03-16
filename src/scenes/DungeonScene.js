@@ -20,24 +20,24 @@ export class DungeonScene {
         // Color base de la cueva profunda
         scene.clearColor = new BABYLON.Color3(0.01, 0.01, 0.02);
 
-        // Cámara "Top-Down" isométrica siguiendo al jugador
-        const camera = new BABYLON.FollowCamera("FollowCam", new BABYLON.Vector3(0, 15, -15), scene);
-        camera.radius = 18; 
-        camera.heightOffset = 15;
-        camera.rotationOffset = 180;
-        camera.cameraAcceleration = 0.05;
-        camera.maxCameraSpeed = 10;
+        // Cámara en 3ra persona tipo Shooter / Action RPG
+        // alpha: rotación horizontal, beta: rotación vertical, radius: distancia
+        const camera = new BABYLON.ArcRotateCamera("ArcCam", -Math.PI / 2, Math.PI / 3, 15, BABYLON.Vector3.Zero(), scene);
         
         // Límites estrictos para evitar que la cámara perfore el suelo
-        camera.lowerHeightOffsetLimit = 5;  // No puede bajar más de 5 unidades de altura respecto al jugador
-        camera.upperHeightOffsetLimit = 25; // No puede subir más de 25
-        camera.lowerRadiusLimit = 10;       // No puede acercarse mucho
-        camera.upperRadiusLimit = 30;       // No puede alejarse mucho
+        camera.lowerRadiusLimit = 8;       // No puede acercarse mucho
+        camera.upperRadiusLimit = 25;       // No puede alejarse mucho
+        camera.lowerBetaLimit = 0.1;       // Evita mirar desde abajo del mapa
+        camera.upperBetaLimit = Math.PI / 2.2; // Evita hundirse en el suelo
         
-        camera.checkCollisions = true; // La cámara choca con paredes grandes
+        camera.checkCollisions = true; 
+        camera.collisionRadius = new BABYLON.Vector3(1, 1, 1); // Tamaño de la cámara para colisiones
         
-        // Bloquear control del usuario sobre la cámara para enfocar en aventura
-        camera.attachControl(this.canvas, false);
+        // Permitir que el jugador gire la cámara arrastrando en la pantalla
+        camera.attachControl(this.canvas, true);
+        
+        // Eliminar inercia excesiva para un control más estilo Shooter
+        camera.inertia = 0.7; 
 
         // Luz de ambiente oscura (Cueva)
         const ambientLight = new BABYLON.HemisphericLight("ambientLight", new BABYLON.Vector3(0, 1, 0), scene);

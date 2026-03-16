@@ -63,17 +63,40 @@ export class Player {
     update(chests, enemies) {
         if (!this.canMove) return;
 
-        // Moverse usando Físicas (moveWithCollisions)
+        // Moverse usando Físicas (moveWithCollisions) Relativo a la Cámara
         if (this.input.joyX !== 0 || this.input.joyY !== 0) {
             if (!this.isDefending) {
-                // Vector de movimiento. Añadimos -0.2 en Y para simular gravedad fuerte contra el suelo
-                const moveDirection = new BABYLON.Vector3(this.input.joyX * this.speed, -0.2, this.input.joyY * this.speed);
-                this.mesh.moveWithCollisions(moveDirection);
+                const camera = this.scene.activeCamera;
+                
+                // Obtener hacia dónde mira la cámara en el plano 2D (suelo)
+                const forward = camera.getForwardRay().direction;
+                forward.y = 0; // Ignorar si miramos arriba o abajo
+                forward.normalize();
+                
+                // Calcular el vector derecho de la cámara (Producto cruz)
+                const right = new BABYLON.Vector3(forward.z, 0, -forward.x);
+                
+                // Mover adelante/atrás basado en joyY, Mover izquierda/derecha basado en joyX
+                const moveX = right.scale(this.input.joyX);
+                const moveZ = forward.scale(this.input.joyY);
+                
+                const moveDirection = moveX.add(moveZ);
+                
+                if (moveDirection.lengthSquared() > 0) {
+                    moveDirection.normalize().scaleInPlace(this.speed);
+                    
+                    // Rotar hacia la dirección del movimiento
+                    const targetAngle = Math.atan2(moveDirection.x, moveDirection.z);
+                    this.mesh.rotation.y = targetAngle;
+                    
+                    // Gravedad
+                    moveDirection.y = -0.2;
+                    this.mesh.moveWithCollisions(moveDirection);
+                }
             }
-            
-            // Rotar hacia donde camina
-            const targetAngle = Math.atan2(this.input.joyX, this.input.joyY);
-            this.mesh.rotation.y = targetAngle;
+        } else {
+            // Aplicar siempre gravedad aunque no se mueva
+            this.mesh.moveWithCollisions(new BABYLON.Vector3(0, -0.2, 0));
         }
 
         // Acciones y Combate
