@@ -1,4 +1,4 @@
-import { logger } from '../game.js?v=3';
+import { logger } from '../game.js?v=4';
 
 export class HUD {
     constructor() {
@@ -26,25 +26,25 @@ export class HUD {
 
     initEvents() {
         if (this.btnBackpack) {
-            this.btnBackpack.addEventListener("pointerdown", () => this.toggleBackpack());
+            this.btnBackpack.addEventListener("click", () => this.toggleBackpack());
         }
         
-        document.getElementById("btnCloseBackpack").addEventListener("pointerdown", () => this.toggleBackpack(false));
-        document.getElementById("btnSortBackpack").addEventListener("pointerdown", () => {
+        document.getElementById("btnCloseBackpack").addEventListener("click", () => this.toggleBackpack(false));
+        document.getElementById("btnSortBackpack").addEventListener("click", () => {
             if (this.player) {
                 this.player.sortInventory();
                 this.updateInventory(this.player.inventory);
             }
         });
         
-        document.getElementById("btnCloseChest").addEventListener("pointerdown", () => {
+        document.getElementById("btnCloseChest").addEventListener("click", () => {
             this.chestModal.style.display = "none";
             if (this.player) {
                 this.player.canMove = true;
             }
         });
         
-        document.getElementById("btnLootAll").addEventListener("pointerdown", () => {
+        document.getElementById("btnLootAll").addEventListener("click", () => {
             if (this.player && this.currentChest) {
                 this.player.lootAll(this.currentChest);
             }
@@ -55,7 +55,7 @@ export class HUD {
             this.showLogs();
         });
 
-        document.getElementById("btnCloseLog").addEventListener("pointerdown", () => {
+        document.getElementById("btnCloseLog").addEventListener("click", () => {
             this.logModal.style.display = "none";
             // Volver al menú principal
             window.dispatchEvent(new Event("pauseGame"));
@@ -64,7 +64,7 @@ export class HUD {
             document.getElementById("mainMenu").style.display = "block";
         });
 
-        document.getElementById("btnDownloadLog").addEventListener("pointerdown", () => {
+        document.getElementById("btnDownloadLog").addEventListener("click", () => {
             if (logger) logger.downloadReport();
         });
     }
@@ -107,7 +107,7 @@ export class HUD {
                 <span class="item-icon">${item.icon}</span>
                 <span class="item-name">${item.name}</span>
             `;
-            slot.onpointerdown = () => {
+            slot.onclick = () => {
                 if (this.player) {
                     this.player.lootItem(index, this.currentChest);
                     this.renderChestItems(); // re-render
@@ -148,7 +148,7 @@ export class HUD {
                     <span class="item-icon">${item.icon}</span>
                     <span class="item-name">${item.name}</span>
                 `;
-                el.onpointerdown = () => {
+                el.onclick = () => {
                     if(this.player) {
                         this.player.unequipItem(slotId);
                         this.updateEquipment(this.player.equipment);
@@ -160,7 +160,7 @@ export class HUD {
                     <span class="item-icon" style="opacity: 0.3;">${defaultIcon}</span>
                     <span class="item-name">${defaultName}</span>
                 `;
-                el.onpointerdown = null;
+                el.onclick = null;
             }
         };
 
@@ -189,7 +189,7 @@ export class HUD {
                 <span class="item-name">${item.name}</span>
             `;
             
-            slot.onpointerdown = (e) => {
+            slot.onclick = (e) => {
                 // Si hizo clic en el botón de vender, no hacemos el "equip"
                 if (e.target.classList.contains("sell-btn")) {
                     if (this.player) {

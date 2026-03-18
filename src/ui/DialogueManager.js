@@ -13,7 +13,7 @@ export class DialogueManager {
         this.onDialogueEnd = null; // Callback para cuando termina la conversación
 
         // Evento para avanzar diálogo al tocar la caja
-        this.box.addEventListener("pointerdown", () => this.advanceDialogue());
+        this.box.addEventListener("click", () => this.advanceDialogue());
     }
 
     startDialogue(dialogueArray, onComplete = null) {
@@ -42,6 +42,7 @@ export class DialogueManager {
     }
 
     typeText(text, index) {
+        if (!this.isTyping) return; // Evitar letras "de más" si se saltó el diálogo
         if (index < text.length) {
             this.textElement.textContent += text.charAt(index);
             this.currentTimeout = setTimeout(() => {

@@ -1,6 +1,6 @@
-import { DungeonScene } from './scenes/DungeonScene.js?v=3';
-import { MenuManager } from './ui/MenuManager.js?v=3';
-import { LogManager } from './utils/LogManager.js?v=3';
+import { DungeonScene } from './scenes/DungeonScene.js?v=4';
+import { MenuManager } from './ui/MenuManager.js?v=4';
+import { LogManager } from './utils/LogManager.js?v=4';
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
@@ -12,10 +12,10 @@ export const logger = new LogManager();
 const initGame = async (config, isNewGame = false) => {
     try {
         if (isNewGame && currentScene) {
-            currentScene.dispose();
+            if (currentScene.scene) currentScene.scene.dispose();
             currentScene = null;
             gameStarted = false;
-            logger.addLog("Reiniciando el juego...", "info");
+            logger.addLog("Reiniciando el juego y destruyendo escena anterior...", "info");
         }
 
         if (!gameStarted) {
