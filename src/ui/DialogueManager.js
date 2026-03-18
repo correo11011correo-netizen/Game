@@ -37,6 +37,10 @@ export class DialogueManager {
         this.nameElement.textContent = current.speaker;
         this.textElement.textContent = "";
         
+        if (this.currentTimeout) {
+            clearTimeout(this.currentTimeout);
+        }
+        
         this.isTyping = true;
         this.typeText(current.text, 0);
     }
@@ -56,7 +60,9 @@ export class DialogueManager {
     advanceDialogue() {
         if (this.isTyping) {
             // Si está escribiendo, forzamos a que muestre todo el texto de golpe
-            clearTimeout(this.currentTimeout);
+            if (this.currentTimeout) {
+                clearTimeout(this.currentTimeout);
+            }
             this.isTyping = false; // Detener flag antes
             this.textElement.textContent = this.dialogues[this.currentDialogIndex].text;
         } else {

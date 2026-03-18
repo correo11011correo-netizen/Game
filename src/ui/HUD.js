@@ -27,16 +27,31 @@ export class HUD {
     initEvents() {
         if (this.btnBackpack) {
             this.btnBackpack.addEventListener("click", () => this.toggleBackpack());
+            this.btnBackpack.addEventListener("touchstart", (e) => { e.preventDefault(); this.toggleBackpack(); }, { passive: false });
         }
-        
-        document.getElementById("btnCloseBackpack").addEventListener("click", () => this.toggleBackpack(false));
-        document.getElementById("btnSortBackpack").addEventListener("click", () => {
-            if (this.player) {
-                this.player.sortInventory();
-                this.updateInventory(this.player.inventory);
-            }
-        });
-        
+
+        const btnCloseBackpack = document.getElementById("btnCloseBackpack");
+        if (btnCloseBackpack) {
+            btnCloseBackpack.addEventListener("click", () => this.toggleBackpack(false));
+            btnCloseBackpack.addEventListener("touchstart", (e) => { e.preventDefault(); this.toggleBackpack(false); }, { passive: false });
+        }
+
+        const btnSortBackpack = document.getElementById("btnSortBackpack");
+        if (btnSortBackpack) {
+            btnSortBackpack.addEventListener("click", () => {
+                if (this.player) {
+                    this.player.sortInventory();
+                    this.updateInventory(this.player.inventory);
+                }
+            });
+            btnSortBackpack.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                if (this.player) {
+                    this.player.sortInventory();
+                    this.updateInventory(this.player.inventory);
+                }
+            }, { passive: false });
+        }        
         document.getElementById("btnCloseChest").addEventListener("click", () => {
             this.chestModal.style.display = "none";
             if (this.player) {
@@ -78,7 +93,7 @@ export class HUD {
     }
 
     toggleBackpack(forceShow) {
-        if (forceShow === true || this.backpackModal.style.display === "none") {
+        if (forceShow === true || this.backpackModal.style.display !== "flex") {
             this.backpackModal.style.display = "flex";
             if (this.player) {
                 this.updateInventory(this.player.inventory);

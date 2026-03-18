@@ -133,3 +133,13 @@ El generador de mazmorras crea un array de coordenadas (`this.enemiesData`) cuan
 Todo el sistema HTML flotante (Cofres, Mochila, Ajustes) tiene la propiedad `pointer-events: auto` en CSS para permitir clicks sin que la cámara del juego los robe, mientras que la capa `#ui-layer` global tiene `pointer-events: none` para no bloquear los giros de cámara del modo Acción.
 
 Si añades paneles nuevos, asegúrate de añadirles `class="game-modal" style="pointer-events: auto"`.
+
+---
+
+## 💬 10. Sistema de Diálogos y Eventos Táctiles (Mejoras Recientes)
+**Archivos:** `src/ui/DialogueManager.js`, `src/ui/HUD.js`
+
+El sistema ha sido parcheado para garantizar una compatibilidad perfecta con dispositivos móviles y evitar fallos lógicos en la renderización de texto:
+
+1.  **Soporte Multi-táctil en el HUD:** Los botones de la mochila y de control (A, B) ahora escuchan tanto el evento `click` clásico (PC) como `touchstart` (Móviles). Se usa `e.preventDefault()` en los toques para evitar demoras (delays) comunes en los navegadores web móviles de 300ms, y evitar que el Canvas absorba el evento por error.
+2.  **Anti-Bleeding de Diálogos:** El efecto de "Máquina de escribir" (Typewriter) en `DialogueManager` ahora maneja asincronía segura. Anteriormente, si el jugador tocaba la pantalla rápidamente saltándose un texto, los `setTimeout` del diálogo anterior seguían ejecutándose (bleeding), causando textos mezclados, letras duplicadas o "letras de más". Ahora el sistema utiliza un `clearTimeout(this.currentTimeout)` absoluto para abortar limpiamente cualquier bucle de renderizado de texto antes de mostrar la siguiente línea de diálogo.
