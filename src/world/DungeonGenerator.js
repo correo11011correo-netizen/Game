@@ -155,11 +155,13 @@ export class DungeonGenerator {
         chest.lidMesh = lid;
 
         const allItems = [
-            { id: "espada", name: "Espada Larga", value: 50, icon: "⚔️" },
-            { id: "escudo", name: "Escudo Fuerte", value: 40, icon: "🛡️" },
-            { id: "pocion", name: "Poción Vida", value: 15, icon: "🧪" },
-            { id: "gema", name: "Gema Preciosa", value: 100, icon: "💎" },
-            { id: "oro", name: "Bolsa de Oro", value: 25, icon: "💰" }
+            { id: "espada", name: "Espada Larga", value: 50, icon: "⚔️", type: "weapon" },
+            { id: "escudo", name: "Escudo Fuerte", value: 40, icon: "🛡️", type: "shield" },
+            { id: "pocion", name: "Poción Vida", value: 15, icon: "🧪", type: "consumable" },
+            { id: "gema", name: "Gema Preciosa", value: 100, icon: "💎", type: "valuable" },
+            { id: "oro", name: "Bolsa de Oro", value: 25, icon: "💰", type: "gold" },
+            { id: "poder_fuego", name: "Aura de Fuego (Compañero)", value: 150, icon: "🔥", type: "companion_power" },
+            { id: "poder_hielo", name: "Aura de Hielo (Compañero)", value: 150, icon: "❄️", type: "companion_power" }
         ];
 
         let generatedItems = [];

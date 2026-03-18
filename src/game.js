@@ -1,14 +1,23 @@
 import { DungeonScene } from './scenes/DungeonScene.js';
 import { MenuManager } from './ui/MenuManager.js';
+import { LogManager } from './utils/LogManager.js';
 
 const canvas = document.getElementById("renderCanvas");
 const engine = new BABYLON.Engine(canvas, true);
 
 let currentScene = null;
 let gameStarted = false;
+export const logger = new LogManager();
 
-const initGame = async (config) => {
+const initGame = async (config, isNewGame = false) => {
     try {
+        if (isNewGame && currentScene) {
+            currentScene.dispose();
+            currentScene = null;
+            gameStarted = false;
+            logger.addLog("Reiniciando el juego...", "info");
+        }
+
         if (!gameStarted) {
             // Primera vez que se inicia
             const gameScene = new DungeonScene(engine, canvas);
@@ -25,10 +34,12 @@ const initGame = async (config) => {
             });
             
             gameStarted = true;
+            logger.addLog("Juego iniciado con éxito.", "info");
         } else {
             // Reanudar juego si estaba pausado
             if (currentScene) {
                 currentScene.paused = false;
+                logger.addLog("Juego reanudado.", "info");
                 
                 // Aplicar nueva configuración si cambió en el menú de pausa
                 if (currentScene.applyConfig) {
@@ -37,6 +48,7 @@ const initGame = async (config) => {
             }
         }
     } catch (err) {
+        logger.addLog("Error fatal: " + err.message, "error");
         document.body.innerHTML = `<div style="background: white; color: red; padding: 20px; font-size: 20px; position: absolute; top:0; left:0; z-index: 9999;"><b>Error fatal:</b> ${err.message}<br><br>${err.stack}</div>`;
     }
 };
@@ -45,6 +57,7 @@ const initGame = async (config) => {
 window.addEventListener("pauseGame", () => {
     if (currentScene) {
         currentScene.paused = true;
+        logger.addLog("Juego pausado.", "info");
     }
 });
 

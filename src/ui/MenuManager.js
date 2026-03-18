@@ -1,6 +1,7 @@
 export class MenuManager {
     constructor(onStartGame) {
         this.onStartGameCallback = onStartGame;
+        this.gameIsRunning = false;
         
         // Elementos del DOM
         this.layerMenu = document.getElementById("menu-layer");
@@ -10,7 +11,11 @@ export class MenuManager {
         this.creditsPanel = document.getElementById("creditsPanel");
 
         // Botones
-        document.getElementById("btnNewGame").addEventListener("click", () => this.startGame());
+        this.btnResumeGame = document.getElementById("btnResumeGame");
+        if (this.btnResumeGame) {
+            this.btnResumeGame.addEventListener("click", () => this.startGame(false));
+        }
+        document.getElementById("btnNewGame").addEventListener("click", () => this.startGame(true));
         document.getElementById("btnSettingsMain").addEventListener("click", () => this.showSettings());
         document.getElementById("btnSaveSettings").addEventListener("click", () => this.hideSettings());
         
@@ -18,6 +23,15 @@ export class MenuManager {
         document.getElementById("btnPause").addEventListener("click", () => {
             this.showMainMenu();
         });
+
+        // Botón de Salir (Terminar Partida)
+        const btnExitGame = document.getElementById("btnExitGame");
+        if (btnExitGame) {
+            btnExitGame.addEventListener("click", () => {
+                // Lanzar evento para que el HUD muestre los logs
+                window.dispatchEvent(new Event("exitGame"));
+            });
+        }
 
         // Créditos
         document.getElementById("btnCredits").addEventListener("click", () => this.toggleCredits());
@@ -38,6 +52,15 @@ export class MenuManager {
         this.mainMenu.style.display = "block";
         this.settingsMenu.style.display = "none";
         
+        // Mostrar botón de reanudar si el juego ya empezó
+        if (this.gameIsRunning && this.btnResumeGame) {
+            this.btnResumeGame.style.display = "block";
+            document.getElementById("btnNewGame").textContent = "Reiniciar Partida";
+        } else if (this.btnResumeGame) {
+            this.btnResumeGame.style.display = "none";
+            document.getElementById("btnNewGame").textContent = "Nueva Partida";
+        }
+
         // Disparar evento para pausar el juego si ya estaba corriendo
         window.dispatchEvent(new Event("pauseGame"));
     }
@@ -66,16 +89,19 @@ export class MenuManager {
         this.mainMenu.style.display = "block";
     }
 
-    startGame() {
+    startGame(isNewGame = false) {
         // Leer el héroe seleccionado antes de empezar
-        const heroSelect = document.getElementById("heroSelect");
-        if (heroSelect) {
-            this.config.hero = heroSelect.value;
-        }
+        if (isNewGame) {
+            const heroSelect = document.getElementById("heroSelect");
+            if (heroSelect) {
+                this.config.hero = heroSelect.value;
+            }
 
-        const companionSelect = document.getElementById("companionSelect");
-        if (companionSelect) {
-            this.config.companion = companionSelect.value;
+            const companionSelect = document.getElementById("companionSelect");
+            if (companionSelect) {
+                this.config.companion = companionSelect.value;
+            }
+            this.gameIsRunning = true;
         }
 
         this.layerMenu.style.display = "none";
@@ -91,7 +117,7 @@ export class MenuManager {
         }
 
         // Llamar a la función que arranca el juego con la config
-        this.onStartGameCallback(this.config);
+        this.onStartGameCallback(this.config, isNewGame);
     }
 
     async toggleCredits() {

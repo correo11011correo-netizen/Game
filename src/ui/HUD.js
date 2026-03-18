@@ -1,3 +1,5 @@
+import { logger } from '../game.js';
+
 export class HUD {
     constructor() {
         this.scoreDisplay = document.getElementById("scoreDisplay");
@@ -10,6 +12,9 @@ export class HUD {
         
         this.chestModal = document.getElementById("chestModal");
         this.chestItems = document.getElementById("chestItems");
+
+        this.logModal = document.getElementById("logModal");
+        this.logContent = document.getElementById("logContent");
         
         this.gold = 0;
         this.level = 1;
@@ -36,10 +41,6 @@ export class HUD {
             this.chestModal.style.display = "none";
             if (this.player) {
                 this.player.canMove = true;
-                // Si el cofre está vacío, lo marcamos como roto para que desaparezca o quede abierto
-                if (this.currentChest && this.currentChest.metadata.items.length === 0) {
-                    this.currentChest.metadata.broken = true;
-                }
             }
         });
         
@@ -48,12 +49,41 @@ export class HUD {
                 this.player.lootAll(this.currentChest);
             }
         });
+
+        // Logs events
+        window.addEventListener("exitGame", () => {
+            this.showLogs();
+        });
+
+        document.getElementById("btnCloseLog").addEventListener("click", () => {
+            this.logModal.style.display = "none";
+            // Volver al menú principal
+            window.dispatchEvent(new Event("pauseGame"));
+            document.getElementById("ui-layer").style.display = "none";
+            document.getElementById("menu-layer").style.display = "flex";
+            document.getElementById("mainMenu").style.display = "block";
+        });
+
+        document.getElementById("btnDownloadLog").addEventListener("click", () => {
+            if (logger) logger.downloadReport();
+        });
+    }
+
+    showLogs() {
+        if (this.player) this.player.canMove = false;
+        if (logger) {
+            this.logContent.textContent = logger.getReport();
+        }
+        this.logModal.style.display = "flex";
     }
 
     toggleBackpack(forceShow) {
         if (forceShow === true || this.backpackModal.style.display === "none") {
             this.backpackModal.style.display = "flex";
-            if (this.player) this.updateInventory(this.player.inventory);
+            if (this.player) {
+                this.updateInventory(this.player.inventory);
+                this.updateEquipment(this.player.equipment);
+            }
         } else {
             this.backpackModal.style.display = "none";
         }
@@ -94,6 +124,7 @@ export class HUD {
     updateGold(amount) {
         this.gold += amount;
         this.updateDisplay();
+        if (amount > 0 && logger) logger.addLog(`Recolectó ${amount} de oro`, 'info');
     }
 
     updateLevel(level) {
@@ -103,6 +134,39 @@ export class HUD {
 
     updateDisplay() {
         this.scoreDisplay.textContent = `Oro: ${this.gold} | Nivel: ${this.level}`;
+    }
+
+    updateEquipment(equipment) {
+        if(!equipment) return;
+        
+        const renderEquipSlot = (slotId, item, defaultIcon, defaultName) => {
+            const el = document.getElementById(slotId);
+            if (!el) return;
+            if (item) {
+                el.innerHTML = `
+                    <span class="item-price" style="background:green">E</span>
+                    <span class="item-icon">${item.icon}</span>
+                    <span class="item-name">${item.name}</span>
+                `;
+                el.onclick = () => {
+                    if(this.player) {
+                        this.player.unequipItem(slotId);
+                        this.updateEquipment(this.player.equipment);
+                        this.updateInventory(this.player.inventory);
+                    }
+                };
+            } else {
+                el.innerHTML = `
+                    <span class="item-icon" style="opacity: 0.3;">${defaultIcon}</span>
+                    <span class="item-name">${defaultName}</span>
+                `;
+                el.onclick = null;
+            }
+        };
+
+        renderEquipSlot("equipWeapon", equipment.weapon, "🗡️", "Arma");
+        renderEquipSlot("equipShield", equipment.shield, "🛡️", "Escudo");
+        renderEquipSlot("equipCompanion", equipment.companion, "✨", "Compañero");
     }
 
     updateInventory(items) {
@@ -118,14 +182,30 @@ export class HUD {
         items.forEach((item, index) => {
             const slot = document.createElement("div");
             slot.className = "item-slot";
-            slot.title = "Clic para VENDER por " + item.value + " oro";
+            slot.title = "Clic Izq: Equipar/Usar | Clic Der: Vender";
             slot.innerHTML = `
                 <span class="item-price">💰${item.value}</span>
                 <span class="item-icon">${item.icon}</span>
                 <span class="item-name">${item.name}</span>
             `;
-            // Click to sell
+            
             slot.onclick = () => {
+                if (this.player) {
+                    if (item.type === "weapon" || item.type === "shield" || item.type === "companion_power") {
+                        this.player.equipItem(index);
+                    } else if (item.type === "gold") {
+                        this.player.useItem(index);
+                    } else {
+                        // Vender por defecto si no es equipable
+                        this.player.sellItem(index);
+                    }
+                    this.updateInventory(this.player.inventory);
+                    this.updateEquipment(this.player.equipment);
+                }
+            };
+
+            slot.oncontextmenu = (e) => {
+                e.preventDefault();
                 if (this.player) {
                     this.player.sellItem(index);
                     this.updateInventory(this.player.inventory);

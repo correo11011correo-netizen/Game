@@ -72,6 +72,11 @@ export class Player {
         this.canMove = true;
         
         this.inventory = [];
+        this.equipment = {
+            weapon: null,
+            shield: null,
+            companion: null
+        };
         this.maxInventory = 30;
         this.hasSword = false;
         this.hasShield = false;
@@ -80,6 +85,7 @@ export class Player {
         if (this.hud) {
             this.hud.player = this;
             this.hud.updateInventory(this.inventory);
+            this.hud.updateEquipment(this.equipment);
         }
         
         this.createVisualWeapons();
@@ -145,7 +151,7 @@ export class Player {
                 this.attack(chests, enemies); 
             } else {
                 this.input.actionA = false; 
-                this.showMessage("Aún no tienes un arma. Busca en los cofres.");
+                this.showMessage("Aún no tienes un arma equipada.");
             }
         }
         
@@ -154,7 +160,7 @@ export class Player {
                 this.defend();
             } else {
                 this.input.actionB = false; 
-                if(!this.isDefending) this.showMessage("Aún no tienes un escudo para defenderte.");
+                if(!this.isDefending) this.showMessage("Aún no tienes un escudo equipado.");
             }
         } else if (this.isDefending) {
             this.stopDefend();
@@ -177,15 +183,17 @@ export class Player {
     checkInteractables(chests) {
         if (!chests) return;
         for (let chest of chests) {
-            if (!chest.metadata.broken) {
-                const distance = BABYLON.Vector3.Distance(this.mesh.position, chest.position);
-                if (distance < 2.5) {
-                    // Abrir automático la primera vez, o manual después
-                    if (!chest.metadata.opened) {
+            const distance = BABYLON.Vector3.Distance(this.mesh.position, chest.position);
+            if (distance < 2.5) {
+                // Abrir automático la primera vez, o manual después
+                if (!chest.metadata.opened) {
+                    this.openChest(chest);
+                } else if (this.input.actionA && this.canMove) {
+                    this.input.actionA = false;
+                    if (chest.metadata.items.length > 0) {
                         this.openChest(chest);
-                    } else if (this.input.actionA && this.canMove && chest.metadata.items.length > 0) {
-                        this.input.actionA = false;
-                        this.openChest(chest);
+                    } else {
+                        this.showMessage("El cofre está vacío.");
                     }
                 }
             }
@@ -228,14 +236,7 @@ export class Player {
         
         this.inventory.push(item);
         
-        if (item.id === "espada") {
-            this.hasSword = true;
-            this.swordMesh.isVisible = true; 
-        } else if (item.id === "escudo") {
-            this.hasShield = true;
-            this.shieldMesh.isVisible = true; 
-        }
-        
+        // Ya no equipamos automáticamente, solo guardamos en mochila
         this.hud.updateInventory(this.inventory);
         if (this.sounds) this.sounds.playHit(); 
     }
@@ -250,18 +251,76 @@ export class Player {
         }
     }
 
+    equipItem(inventoryIndex) {
+        const item = this.inventory[inventoryIndex];
+        if (!item) return;
+
+        let prevItem = null;
+        if (item.type === "weapon") {
+            prevItem = this.equipment.weapon;
+            this.equipment.weapon = item;
+            this.hasSword = true;
+            this.swordMesh.isVisible = true;
+        } else if (item.type === "shield") {
+            prevItem = this.equipment.shield;
+            this.equipment.shield = item;
+            this.hasShield = true;
+            this.shieldMesh.isVisible = true;
+        } else if (item.type === "companion_power") {
+            prevItem = this.equipment.companion;
+            this.equipment.companion = item;
+        }
+
+        // Remover de la mochila
+        this.inventory.splice(inventoryIndex, 1);
+        
+        // Devolver el anterior a la mochila
+        if (prevItem) {
+            this.inventory.push(prevItem);
+        }
+
+        if (this.sounds) this.sounds.playChestOpen();
+    }
+
+    unequipItem(slotId) {
+        let item = null;
+        if (slotId === "equipWeapon" && this.equipment.weapon) {
+            item = this.equipment.weapon;
+            this.equipment.weapon = null;
+            this.hasSword = false;
+            this.swordMesh.isVisible = false;
+        } else if (slotId === "equipShield" && this.equipment.shield) {
+            item = this.equipment.shield;
+            this.equipment.shield = null;
+            this.hasShield = false;
+            this.shieldMesh.isVisible = false;
+        } else if (slotId === "equipCompanion" && this.equipment.companion) {
+            item = this.equipment.companion;
+            this.equipment.companion = null;
+        }
+
+        if (item) {
+            this.inventory.push(item);
+            if (this.sounds) this.sounds.playChestOpen();
+        }
+    }
+
+    useItem(inventoryIndex) {
+        const item = this.inventory[inventoryIndex];
+        if (!item) return;
+
+        if (item.type === "gold") {
+            this.hud.updateGold(item.value);
+            this.inventory.splice(inventoryIndex, 1);
+            if (this.sounds) this.sounds.playHit();
+        }
+    }
+
     sellItem(index) {
         const item = this.inventory[index];
         this.inventory.splice(index, 1);
         this.hud.updateGold(item.value);
         if (this.sounds) this.sounds.playHit(); 
-        
-        // Verificar si nos quedamos sin espada o escudo
-        this.hasSword = this.inventory.some(i => i.id === "espada");
-        this.swordMesh.isVisible = this.hasSword;
-        
-        this.hasShield = this.inventory.some(i => i.id === "escudo");
-        this.shieldMesh.isVisible = this.hasShield;
     }
 
     sortInventory() {
