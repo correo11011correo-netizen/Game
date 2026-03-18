@@ -1,17 +1,22 @@
 import { logger } from '../game.js?v=13';
+import { ItemDatabase } from '../data/ItemDatabase.js?v=13';
 
 export class HUD {
     constructor() {
         this.scoreDisplay = document.getElementById("scoreDisplay");
         this.btnBackpack = document.getElementById("btnBackpack");
         this.backpackFill = document.getElementById("backpackFill");
-        
+
         this.backpackModal = document.getElementById("backpackModal");
         this.backpackItems = document.getElementById("backpackItems");
         this.backpackCount = document.getElementById("backpackCount");
-        
+
         this.chestModal = document.getElementById("chestModal");
         this.chestItems = document.getElementById("chestItems");
+
+        this.shopModal = document.getElementById("shopModal");
+        this.shopItems = document.getElementById("shopItems");
+        this.shopPlayerGold = document.getElementById("shopPlayerGold");
 
         this.logModal = document.getElementById("logModal");
         this.logContent = document.getElementById("logContent");
@@ -23,10 +28,10 @@ export class HUD {
 
         this.gameOverModal = document.getElementById("gameOverModal");
 
-        this.gold = 0;        this.level = 1;
+        this.level = 1;
         this.player = null; // Se setea desde Player
         this.currentChest = null;
-        
+
         this.initEvents();
     }
 
@@ -49,13 +54,13 @@ export class HUD {
         let el = document.getElementById(id);
         if (!el && id === "btnBackpack") el = this.btnBackpack;
         if (!el) return;
-        
+
         // Clonar para purgar event listeners de sesiones anteriores (evita bug de doble disparo al reiniciar)
         const clone = el.cloneNode(true);
         el.parentNode.replaceChild(clone, el);
-        
+
         if (id === "btnBackpack") this.btnBackpack = clone;
-        
+
         this.bindTap(clone, action);
     }
 
@@ -83,7 +88,14 @@ export class HUD {
                 this.player.lootAll(this.currentChest);
             }
         });
-        
+
+        this.replaceAndBind("btnCloseShop", () => {
+            this.shopModal.style.display = "none";
+            if (this.player) {
+                this.player.canMove = true;
+            }
+        });
+
         // Logs events
         window.addEventListener("exitGame", () => {
             this.showLogs();
@@ -179,7 +191,7 @@ export class HUD {
     renderChestItems() {
         this.chestItems.innerHTML = "";
         if (!this.currentChest || !this.currentChest.metadata.items) return;
-        
+
         const items = this.currentChest.metadata.items;
         items.forEach((item, index) => {
             const slot = document.createElement("div");
@@ -196,16 +208,42 @@ export class HUD {
             });
             this.chestItems.appendChild(slot);
         });
-        
+
         if (items.length === 0) {
             this.chestItems.innerHTML = "<p style='width:100%;text-align:center;color:#aaa;grid-column: 1 / -1;'>Vacío</p>";
         }
     }
 
-    updateGold(amount) {
-        this.gold += amount;
-        this.updateDisplay();
-        if (amount > 0 && logger) logger.addLog(`Recolectó ${amount} de oro`, 'info');
+    showShop() {
+        if (!this.player) return;
+        this.player.canMove = false;
+
+        this.shopItems.innerHTML = "";
+        this.updateDisplay(); // Actualizar display de oro
+
+        const allItems = Object.values(ItemDatabase.items);
+
+        allItems.forEach(item => {
+            if (item.type === 'gold') return; // No vender oro en la tienda
+
+            const slot = document.createElement("div");
+            slot.className = "item-slot";
+            slot.innerHTML = `
+                <span class="item-icon">${item.icon}</span>
+                <span class="item-name">${item.name}</span>
+                <div class="buy-btn" title="Comprar">💰 ${item.value}</div>
+            `;
+
+            this.bindTap(slot, () => {
+                if (this.player) {
+                    this.player.buyItem(item);
+                }
+            });
+
+            this.shopItems.appendChild(slot);
+        });
+
+        this.shopModal.style.display = "flex";
     }
 
     updateLevel(level) {
@@ -214,14 +252,18 @@ export class HUD {
     }
 
     updateDisplay() {
-        this.scoreDisplay.textContent = `Oro: ${this.gold} | Nivel: ${this.level}`;
+        const gold = this.player ? this.player.gold : 0;
+        this.scoreDisplay.textContent = `Oro: ${gold} | Nivel: ${this.level}`;
+
         const goldModal = document.getElementById("goldDisplayModal");
-        if(goldModal) goldModal.textContent = `💰 Oro: ${this.gold}`;
+        if(goldModal) goldModal.textContent = `💰 Oro: ${gold}`;
+
+        if(this.shopPlayerGold) this.shopPlayerGold.textContent = `Tu Oro: ${gold}`;
     }
 
     updateEquipment(equipment) {
         if(!equipment) return;
-        
+
         const renderEquipSlot = (slotId, item, defaultIcon, defaultName) => {
             const el = document.getElementById(slotId);
             if (!el) return;
@@ -268,7 +310,7 @@ export class HUD {
 
         // Render backpack items
         if(this.backpackItems) this.backpackItems.innerHTML = "";
-        
+
         items.forEach((item, index) => {
             const slot = document.createElement("div");
             slot.className = "item-slot";
@@ -278,7 +320,7 @@ export class HUD {
                 <span class="item-icon">${item.icon}</span>
                 <span class="item-name">${item.name}</span>
             `;
-            
+
             this.bindTap(slot, (e) => {
                 // Si hizo clic en el botón de vender, no hacemos el "equip"
                 if (e.target && e.target.classList && e.target.classList.contains("sell-btn")) {

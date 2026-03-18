@@ -424,6 +424,23 @@ canvas {
   transform: scale(0.9);
   background: #ff0000;
 }
+
+.buy-btn {
+  position: absolute;
+  bottom: 0px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #228B22; /* ForestGreen */
+  color: white;
+  font-size: 11px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  border: 1px solid #90EE90; /* LightGreen */
+  width: 80%;
+  box-sizing: border-box;
+  text-align: center;
+}
 .modal-footer {
   display: flex;
   justify-content: space-around;

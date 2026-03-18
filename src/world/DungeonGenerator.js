@@ -12,7 +12,7 @@ export class DungeonGenerator {
         
         // Memoria del mundo
         this.generatedChunks = new Set(); // Guarda qué parcelas ya se crearon "X,Z"
-        this.chests = [];
+        this.interactables = [];
         this.enemiesData = []; // Para spawnear enemigos en nuevos chunks
     }
 
@@ -90,8 +90,10 @@ export class DungeonGenerator {
         this.createTorch(`torch_${chunkX}_${chunkZ}`, cx - halfRoom + 1, 2.5, cz + halfRoom - 1, "S");
 
         // 4. Generación de Contenido Aleatorio (RNG)
-        // No generamos enemigos ni trampas en el Chunk de inicio (0,0)
-        if (chunkX === 0 && chunkZ === 0) return;
+        if (chunkX === 0 && chunkZ === 0) {
+            this.createMerchant(0, 1, 5); // Colocar mercader en el chunk inicial
+            return; // No generar más nada en el chunk inicial
+        }
 
         // Generar Pilares o Puentes interiores
         if (Math.random() > 0.4) {
@@ -103,7 +105,7 @@ export class DungeonGenerator {
         if (Math.random() > 0.8) {
             const offsetX = (Math.random() > 0.5 ? 1 : -1) * (this.roomSize/2 - 5);
             const offsetZ = (Math.random() > 0.5 ? 1 : -1) * (this.roomSize/2 - 5);
-            const itemType = Math.random() > 0.5 ? "espada" : "escudo";
+            const itemType = "random";
             this.createChest(`chest_${chunkX}_${cz}`, itemType, cx + offsetX, 0.5, cz + offsetZ);
         }
 
@@ -180,7 +182,19 @@ export class DungeonGenerator {
             }
         }
 
-        chest.metadata = { items: generatedItems, opened: false, broken: false, canAutoTrigger: false };
-        this.chests.push(chest);
+        chest.metadata = { type: "chest", items: generatedItems, opened: false, broken: false, canAutoTrigger: false };
+        this.interactables.push(chest);
+    }
+    
+    createMerchant(x, y, z) {
+        const merchant = BABYLON.MeshBuilder.CreateCapsule("merchant", { height: 2.2, radius: 0.6 }, this.scene);
+        merchant.position.set(x, y, z);
+
+        const mat = new BABYLON.StandardMaterial("merchantMat", this.scene);
+        mat.diffuseColor = new BABYLON.Color3(0.3, 0.5, 1.0); // Blue color
+        merchant.material = mat;
+
+        merchant.metadata = { type: "merchant" };
+        this.interactables.push(merchant);
     }
 }

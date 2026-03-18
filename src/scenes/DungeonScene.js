@@ -136,7 +136,7 @@ export class DungeonScene {
                 }
 
                 // 2. JUGADOR
-                this.player.update(world.chests, enemies);
+                this.player.update(world.interactables, enemies);
 
                 if (this.companion) {
                     this.companion.update();
@@ -175,7 +175,7 @@ export class DungeonScene {
                     }
                 }
 
-                minimap.update(this.player, world.chests, enemies);
+                minimap.update(this.player, world.interactables, enemies);
             }
         });
 

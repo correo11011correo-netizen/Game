@@ -76,6 +76,7 @@ export class Player {
         this.maxHp = 100;
         this.energy = 100;
         this.maxEnergy = 100;
+        this.gold = 0;
         
         this.inventory = [];
         this.equipment = {
@@ -143,7 +144,7 @@ export class Player {
         this.shieldMesh.material = shieldMat;
     }
 
-    update(chests, enemies) {
+    update(interactables, enemies) {
         if (!this.canMove || this.isDead) return;
 
         // Regeneración de energía
@@ -162,12 +163,12 @@ export class Player {
             this.mesh.position.y = 1.0;
         }
 
-        this.updateProjectiles(chests, enemies);
+        this.updateProjectiles(interactables, enemies);
 
         // Acciones y Combate
         if (this.input.actionA && !this.isAttacking && !this.isDefending) {
             if (this.hasSword) {
-                this.attack(chests, enemies); 
+                this.attack(interactables, enemies); 
             } else {
                 this.input.actionA = false; 
                 this.showMessage("Aún no tienes un arma equipada.");
@@ -185,7 +186,7 @@ export class Player {
             this.stopDefend();
         }
 
-        this.checkInteractables(chests);
+        this.checkInteractables(interactables);
     }
 
     showMessage(text) {
@@ -199,37 +200,44 @@ export class Player {
         }
     }
 
-    checkInteractables(chests) {
-        if (!chests) return;
-        for (let chest of chests) {
-            const distance = BABYLON.Vector3.Distance(this.mesh.position, chest.position);
+    checkInteractables(interactables) {
+        if (!interactables) return;
+        for (let interactable of interactables) {
+            const distance = BABYLON.Vector3.Distance(this.mesh.position, interactable.position);
             
-            // Lógica de resetear trigger de auto-abrir cuando nos alejamos
-            if (distance > 3.5) {
-                chest.metadata.canAutoTrigger = true;
-            }
+            if (interactable.metadata.type === 'chest') {
+                // Lógica de resetear trigger de auto-abrir cuando nos alejamos
+                if (distance > 3.5) {
+                    interactable.metadata.canAutoTrigger = true;
+                }
 
-            if (distance < 2.5) {
-                if (!chest.metadata.opened || chest.metadata.canAutoTrigger) {
-                    // Acción automática al acercarse
-                    chest.metadata.canAutoTrigger = false;
-                    
-                    if (chest.metadata.items.length > 0) {
-                        this.openChest(chest);
-                    } else if (!chest.metadata.opened) {
-                        this.openChest(chest); // Abrir por primera vez vacío
-                    } else {
-                        // Si ya estaba abierto y volvemos
-                        this.showMessage("El cofre ya está vacío.");
+                if (distance < 2.5) {
+                    if (!interactable.metadata.opened || interactable.metadata.canAutoTrigger) {
+                        // Acción automática al acercarse
+                        interactable.metadata.canAutoTrigger = false;
+                        
+                        if (interactable.metadata.items.length > 0) {
+                            this.openChest(interactable);
+                        } else if (!interactable.metadata.opened) {
+                            this.openChest(interactable); // Abrir por primera vez vacío
+                        } else {
+                            // Si ya estaba abierto y volvemos
+                            this.showMessage("El cofre ya está vacío.");
+                        }
+                    } else if (this.input.actionA && this.canMove) {
+                        // Manual (tocando el botón estando cerca)
+                        this.input.actionA = false;
+                        if (interactable.metadata.items.length > 0) {
+                            this.openChest(interactable);
+                        } else {
+                            this.showMessage("El cofre ya está vacío.");
+                        }
                     }
-                } else if (this.input.actionA && this.canMove) {
-                    // Manual (tocando el botón estando cerca)
+                }
+            } else if (interactable.metadata.type === 'merchant') {
+                if (distance < 3.0 && this.input.actionA) {
                     this.input.actionA = false;
-                    if (chest.metadata.items.length > 0) {
-                        this.openChest(chest);
-                    } else {
-                        this.showMessage("El cofre ya está vacío.");
-                    }
+                    this.hud.showShop();
                 }
             }
         }
@@ -365,14 +373,43 @@ export class Player {
         }
     }
 
+    addGold(amount) {
+        this.gold += amount;
+        if (this.hud) this.hud.updateDisplay();
+        if (this.sounds) this.sounds.playHit();
+    }
+
+    spendGold(amount) {
+        if (this.gold >= amount) {
+            this.gold -= amount;
+            if (this.hud) this.hud.updateDisplay();
+            return true;
+        }
+        return false;
+    }
+
+    buyItem(item) {
+        if (this.inventory.length >= this.maxInventory) {
+            this.showMessage("¡Tu mochila está llena!");
+            return;
+        }
+        if (this.spendGold(item.value)) {
+            this.inventory.push({ ...item }); // Add a copy
+            if (this.hud) this.hud.updateInventory(this.inventory);
+            if (this.sounds) this.sounds.playChestOpen();
+            this.showMessage(`¡Has comprado ${item.name}!`);
+        } else {
+            this.showMessage("No tienes suficiente oro.");
+        }
+    }
+
     useItem(inventoryIndex) {
         const item = this.inventory[inventoryIndex];
         if (!item) return;
 
         if (item.type === "gold") {
-            this.hud.updateGold(item.value);
+            this.addGold(item.value);
             this.inventory.splice(inventoryIndex, 1);
-            if (this.sounds) this.sounds.playHit();
         } else if (item.type === "consumable") {
             if (item.heal) {
                 this.hp += item.heal;
@@ -445,8 +482,7 @@ export class Player {
     sellItem(index) {
         const item = this.inventory[index];
         this.inventory.splice(index, 1);
-        this.hud.updateGold(item.value);
-        if (this.sounds) this.sounds.playHit(); 
+        this.addGold(item.value);
     }
 
     sortInventory() {
@@ -539,7 +575,7 @@ export class Player {
                         if (dist < 3.0) {
                             obj.metadata.broken = true; 
                             obj.dispose(); 
-                            this.hud.updateGold(5); 
+                            this.addGold(5); 
                             this.hud.updateDisplay();
                             hitSomething = true;
                         }
@@ -585,7 +621,7 @@ export class Player {
                         if (BABYLON.Vector3.Distance(p.mesh.position, obj.position) < 1.5) {
                             obj.metadata.broken = true;
                             obj.dispose();
-                            this.hud.updateGold(5);
+                            this.addGold(5);
                             this.hud.updateDisplay();
                             if (this.sounds) this.sounds.playHit();
                             hit = true;
