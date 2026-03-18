@@ -27,7 +27,7 @@ export class Player {
             this.speed = 0.18; // Mago es un poco más lento
 
             // Sombrero de Mago
-            const hat = BABYLON.MeshBuilder.CreateCone("mageHat", { diameter: 0.8, height: 1 }, scene);
+            const hat = BABYLON.MeshBuilder.CreateCylinder("mageHat", { diameterTop: 0, diameterBottom: 0.8, height: 1 }, scene);
             hat.parent = this.mesh;
             hat.position.y = 1.2;
             const hatMat = new BABYLON.StandardMaterial("hatMat", scene);
