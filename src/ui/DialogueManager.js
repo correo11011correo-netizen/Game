@@ -10,15 +10,18 @@ export class DialogueManager {
         this.isTyping = false;
         this.typeSpeed = 30; // ms por letra
         this.currentTimeout = null;
+        this.currentDialogueId = 0; // ID único para evitar sangrado de texto (bleeding)
         
         this.onDialogueEnd = null; // Callback para cuando termina la conversación
 
         // Evento para avanzar diálogo al tocar la caja
-        this.box.addEventListener("click", () => this.advanceDialogue());
-        this.box.addEventListener("touchstart", (e) => {
-            e.preventDefault();
-            this.advanceDialogue();
-        }, { passive: false });
+        // Usamos pointerdown en lugar de click/touchstart para evitar eventos dobles
+        if (this.box) {
+            this.box.addEventListener("pointerdown", (e) => {
+                e.preventDefault();
+                this.advanceDialogue();
+            });
+        }
     }
 
     startDialogue(dialogueArray, onComplete = null) {
@@ -28,7 +31,7 @@ export class DialogueManager {
         this.currentDialogIndex = 0;
         this.onDialogueEnd = onComplete;
         
-        this.box.style.display = "block";
+        if (this.box) this.box.style.display = "block";
         this.showCurrentDialogue();
     }
 
@@ -46,7 +49,7 @@ export class DialogueManager {
             const speakerLow = current.speaker.toLowerCase();
             let icon = "🗣️";
             if (speakerLow.includes("sistema")) icon = "⚙️";
-            else if (speakerLow.includes("tú")) icon = "🧑";
+            else if (speakerLow.includes("tú") || speakerLow.includes("tu")) icon = "🧑";
             else if (speakerLow.includes("voz")) icon = "👻";
             this.avatarElement.textContent = icon;
         }
@@ -55,16 +58,24 @@ export class DialogueManager {
             clearTimeout(this.currentTimeout);
         }
         
+        this.currentDialogueId++; // Invalidar cualquier escritura asíncrona anterior
         this.isTyping = true;
-        this.typeText(current.text, 0);
+        this.typeText(current.text, 0, this.currentDialogueId);
     }
 
-    typeText(text, index) {
-        if (!this.isTyping) return; // Evitar letras "de más" si se saltó el diálogo
+    typeText(text, index, dialogueId) {
+        // Validación de seguridad absoluta:
+        // Si el ID del ciclo actual no coincide con el que inició esta escritura, abortar.
+        if (dialogueId !== this.currentDialogueId || !this.isTyping) {
+            return;
+        }
+
         if (index < text.length) {
-            this.textElement.textContent += text.charAt(index);
+            // Reemplazamos textContent += por substring para evitar que letras viejas se sumen a la cola
+            this.textElement.textContent = text.substring(0, index + 1);
+            
             this.currentTimeout = setTimeout(() => {
-                this.typeText(text, index + 1);
+                this.typeText(text, index + 1, dialogueId);
             }, this.typeSpeed);
         } else {
             this.isTyping = false;
@@ -74,10 +85,11 @@ export class DialogueManager {
     advanceDialogue() {
         if (this.isTyping) {
             // Si está escribiendo, forzamos a que muestre todo el texto de golpe
+            this.currentDialogueId++; // Cancelar próximos timeouts de este hilo
             if (this.currentTimeout) {
                 clearTimeout(this.currentTimeout);
             }
-            this.isTyping = false; // Detener flag antes
+            this.isTyping = false;
             this.textElement.textContent = this.dialogues[this.currentDialogIndex].text;
         } else {
             // Si ya terminó de escribir, pasamos al siguiente
@@ -87,8 +99,9 @@ export class DialogueManager {
     }
 
     endDialogue() {
-        this.box.style.display = "none";
+        if (this.box) this.box.style.display = "none";
         this.dialogues = [];
+        this.currentDialogueId++; // Invalidar restos
         if (this.onDialogueEnd) {
             this.onDialogueEnd();
         }

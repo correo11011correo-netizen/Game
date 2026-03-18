@@ -1,15 +1,15 @@
-import { InputController } from '../utils/InputController.js?v=5';
-import { HUD } from '../ui/HUD.js?v=5';
-import { Player } from '../entities/Player.js?v=5';
-import { Companion } from '../entities/Companion.js?v=5';
-import { DungeonGenerator } from '../world/DungeonGenerator.js?v=5';
-import { DialogueManager } from '../ui/DialogueManager.js?v=5';
-import { Minimap } from '../ui/Minimap.js?v=5';
-import { ShadowRat } from '../entities/enemies/ShadowRat.js?v=5';
-import { TopDownController } from '../controllers/TopDownController.js?v=5';
-import { ShooterController } from '../controllers/ShooterController.js?v=5';
-import { AssetManager } from '../utils/AssetManager.js?v=5';
-import { SoundManager } from '../utils/SoundManager.js?v=5'; // Importar Sonidos
+import { InputController } from '../utils/InputController.js?v=6';
+import { HUD } from '../ui/HUD.js?v=6';
+import { Player } from '../entities/Player.js?v=6';
+import { Companion } from '../entities/Companion.js?v=6';
+import { DungeonGenerator } from '../world/DungeonGenerator.js?v=6';
+import { DialogueManager } from '../ui/DialogueManager.js?v=6';
+import { Minimap } from '../ui/Minimap.js?v=6';
+import { ShadowRat } from '../entities/enemies/ShadowRat.js?v=6';
+import { TopDownController } from '../controllers/TopDownController.js?v=6';
+import { ShooterController } from '../controllers/ShooterController.js?v=6';
+import { AssetManager } from '../utils/AssetManager.js?v=6';
+import { SoundManager } from '../utils/SoundManager.js?v=6'; // Importar Sonidos
 
 export class DungeonScene {
     constructor(engine, canvas) {

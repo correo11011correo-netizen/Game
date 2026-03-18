@@ -1,4 +1,4 @@
-import { logger } from '../game.js?v=5';
+import { logger } from '../game.js?v=6';
 
 export class HUD {
     constructor() {
