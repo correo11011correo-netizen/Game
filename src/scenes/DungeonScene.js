@@ -1,15 +1,15 @@
-import { InputController } from '../utils/InputController.js';
-import { HUD } from '../ui/HUD.js';
-import { Player } from '../entities/Player.js';
-import { Companion } from '../entities/Companion.js';
-import { DungeonGenerator } from '../world/DungeonGenerator.js';
-import { DialogueManager } from '../ui/DialogueManager.js';
-import { Minimap } from '../ui/Minimap.js';
-import { ShadowRat } from '../entities/enemies/ShadowRat.js';
-import { TopDownController } from '../controllers/TopDownController.js';
-import { ShooterController } from '../controllers/ShooterController.js';
-import { AssetManager } from '../utils/AssetManager.js';
-import { SoundManager } from '../utils/SoundManager.js'; // Importar Sonidos
+import { InputController } from '../utils/InputController.js?v=3';
+import { HUD } from '../ui/HUD.js?v=3';
+import { Player } from '../entities/Player.js?v=3';
+import { Companion } from '../entities/Companion.js?v=3';
+import { DungeonGenerator } from '../world/DungeonGenerator.js?v=3';
+import { DialogueManager } from '../ui/DialogueManager.js?v=3';
+import { Minimap } from '../ui/Minimap.js?v=3';
+import { ShadowRat } from '../entities/enemies/ShadowRat.js?v=3';
+import { TopDownController } from '../controllers/TopDownController.js?v=3';
+import { ShooterController } from '../controllers/ShooterController.js?v=3';
+import { AssetManager } from '../utils/AssetManager.js?v=3';
+import { SoundManager } from '../utils/SoundManager.js?v=3'; // Importar Sonidos
 
 export class DungeonScene {
     constructor(engine, canvas) {

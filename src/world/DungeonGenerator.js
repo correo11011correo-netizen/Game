@@ -1,3 +1,5 @@
+import { ItemDatabase } from '../data/ItemDatabase.js?v=3';
+
 export class DungeonGenerator {
     constructor(scene, assetManager) {
         this.scene = scene;
@@ -166,30 +168,19 @@ export class DungeonGenerator {
         
         chest.lidMesh = hinge;
 
-        const allItems = [
-            { id: "espada", name: "Espada Larga", value: 50, icon: "⚔️", type: "weapon" },
-            { id: "escudo", name: "Escudo Fuerte", value: 40, icon: "🛡️", type: "shield" },
-            { id: "pocion", name: "Poción Vida", value: 15, icon: "🧪", type: "consumable" },
-            { id: "gema", name: "Gema Preciosa", value: 100, icon: "💎", type: "valuable" },
-            { id: "oro", name: "Bolsa de Oro", value: 25, icon: "💰", type: "gold" },
-            { id: "poder_fuego", name: "Aura de Fuego (Compañero)", value: 150, icon: "🔥", type: "companion_power" },
-            { id: "poder_hielo", name: "Aura de Hielo (Compañero)", value: 150, icon: "❄️", type: "companion_power" }
-        ];
-
         let generatedItems = [];
         if (itemType === "espada") {
-            generatedItems.push({...allItems[0]}); 
+            generatedItems.push(ItemDatabase.getItem("espada_larga")); 
         } else if (itemType === "escudo") {
-            generatedItems.push({...allItems[1]}); 
+            generatedItems.push(ItemDatabase.getItem("escudo_hierro")); 
         } else {
             const numItems = Math.floor(Math.random() * 3) + 1; // 1 a 3 objetos
             for (let i = 0; i < numItems; i++) {
-                const rndItem = allItems[Math.floor(Math.random() * allItems.length)];
-                generatedItems.push({...rndItem}); 
+                generatedItems.push(ItemDatabase.generateLoot()); 
             }
         }
 
-        chest.metadata = { items: generatedItems, opened: false, broken: false };
+        chest.metadata = { items: generatedItems, opened: false, broken: false, canAutoTrigger: false };
         this.chests.push(chest);
     }
 }

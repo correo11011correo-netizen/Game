@@ -191,18 +191,17 @@ export class Player {
             }
 
             if (distance < 2.5) {
-                // Abrir automático la primera vez o si nos alejamos y volvimos
                 if (!chest.metadata.opened || chest.metadata.canAutoTrigger) {
+                    // Acción automática al acercarse
+                    chest.metadata.canAutoTrigger = false;
+                    
                     if (chest.metadata.items.length > 0) {
-                        chest.metadata.canAutoTrigger = false;
                         this.openChest(chest);
                     } else if (!chest.metadata.opened) {
-                        // Cofre virgen pero vacío? (raro, pero posible)
-                        chest.metadata.canAutoTrigger = false;
-                        this.openChest(chest);
-                    } else if (this.input.actionA && this.canMove) {
-                        this.input.actionA = false;
-                        this.showMessage("El cofre está vacío.");
+                        this.openChest(chest); // Abrir por primera vez vacío
+                    } else {
+                        // Si ya estaba abierto y volvemos
+                        this.showMessage("El cofre ya está vacío.");
                     }
                 } else if (this.input.actionA && this.canMove) {
                     // Manual (tocando el botón estando cerca)
@@ -210,7 +209,7 @@ export class Player {
                     if (chest.metadata.items.length > 0) {
                         this.openChest(chest);
                     } else {
-                        this.showMessage("El cofre está vacío.");
+                        this.showMessage("El cofre ya está vacío.");
                     }
                 }
             }

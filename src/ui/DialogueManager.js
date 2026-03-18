@@ -56,8 +56,8 @@ export class DialogueManager {
         if (this.isTyping) {
             // Si está escribiendo, forzamos a que muestre todo el texto de golpe
             clearTimeout(this.currentTimeout);
+            this.isTyping = false; // Detener flag antes
             this.textElement.textContent = this.dialogues[this.currentDialogIndex].text;
-            this.isTyping = false;
         } else {
             // Si ya terminó de escribir, pasamos al siguiente
             this.currentDialogIndex++;
